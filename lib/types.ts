@@ -31,10 +31,13 @@ export interface AuthLoginData {
 
 export interface ApiKeyItem {
   id: string
-  keyPreview: string
+  keyPrefix: string | null
+  keyPreview?: string
   name: string | null
   scopes: string[]
+  environment: 'TEST' | 'LIVE'
   isActive: boolean
+  lastUsedAt: string | null
   createdAt: string
 }
 

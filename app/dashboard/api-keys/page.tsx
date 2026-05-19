@@ -132,7 +132,7 @@ export default function ApiKeysPage() {
                 {keys.map((k) => (
                   <tr key={k.id} className="border-b border-slate-800/60">
                     <td className="py-3 pr-4 text-slate-200">{k.name ?? '—'}</td>
-                    <td className="py-3 pr-4 font-mono text-xs text-slate-400">{k.keyPreview}</td>
+                    <td className="py-3 pr-4 font-mono text-xs text-slate-400">{k.keyPrefix ?? k.keyPreview ?? '—'}</td>
                     <td className="py-3 pr-4">
                       <div className="flex flex-wrap gap-1">
                         {k.scopes.slice(0, 2).map((s) => (

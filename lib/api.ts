@@ -8,9 +8,9 @@ import type {
   WalletPhoneVerification,
   WebhookEventDoc,
 } from './types'
-import { getToken } from './auth-storage'
+import { getAccessToken, setAccessToken } from './auth-storage'
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4017/api/v2'
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000/api/v2'
 
 export class ApiError extends Error {
   statusCode: number
@@ -22,17 +22,43 @@ export class ApiError extends Error {
 
 async function request<T>(
   path: string,
-  options: RequestInit & { token?: string | null } = {},
+  options: RequestInit & { token?: string | null; skipRefresh?: boolean } = {},
 ): Promise<T> {
-  const { token, ...init } = options
+  const { token, skipRefresh, ...init } = options
   const headers = new Headers(init.headers)
   if (!headers.has('Content-Type') && init.body) {
     headers.set('Content-Type', 'application/json')
   }
-  const authToken = token ?? getToken()
+  const authToken = token !== undefined ? token : getAccessToken()
   if (authToken) headers.set('Authorization', `Bearer ${authToken}`)
 
-  const res = await fetch(`${API_BASE}${path}`, { ...init, headers })
+  const res = await fetch(`${API_BASE}${path}`, {
+    ...init,
+    headers,
+    credentials: 'include',
+  })
+
+  if (res.status === 401 && !skipRefresh && token !== null) {
+    try {
+      const refreshed = await refreshAccessToken()
+      setAccessToken(refreshed.accessToken)
+      headers.set('Authorization', `Bearer ${refreshed.accessToken}`)
+      const retry = await fetch(`${API_BASE}${path}`, { ...init, headers, credentials: 'include' })
+      const retryJson = (await retry.json()) as ApiResponse<T>
+      if (!retryJson.ok) {
+        throw new ApiError(
+          'error' in retryJson && retryJson.error?.message
+            ? retryJson.error.message
+            : `Erreur API (${retry.status})`,
+          retryJson.statusCode ?? retry.status,
+        )
+      }
+      return retryJson.data
+    } catch {
+      setAccessToken(null)
+    }
+  }
+
   const json = (await res.json()) as ApiResponse<T>
 
   if (!json.ok) {
@@ -46,7 +72,21 @@ async function request<T>(
   return json.data
 }
 
+async function refreshAccessToken() {
+  const res = await fetch(`${API_BASE}/dtmoney-api/auth/refresh`, {
+    method: 'POST',
+    credentials: 'include',
+  })
+  const json = (await res.json()) as ApiResponse<AuthLoginData>
+  if (!json.ok) {
+    throw new ApiError('Session expirée', json.statusCode ?? 401)
+  }
+  return json.data
+}
+
 export const api = {
+  refreshSession: refreshAccessToken,
+
   verifyWalletPhone: (phone: string) =>
     request<WalletPhoneVerification>('/dtmoney-api/auth/verify-wallet-phone', {
       method: 'POST',
@@ -68,20 +108,28 @@ export const api = {
     }),
 
   verifyEmail: (email: string, code: string) =>
-    request<{ status: boolean; message: string; accessToken: string }>('/dtmoney-api/auth/verify-email', {
+    request<{ status: boolean; message: string; accessToken: string; expiresIn: number }>(
+      '/dtmoney-api/auth/verify-email',
+      {
+        method: 'POST',
+        body: JSON.stringify({ email, code }),
+        token: null,
+      },
+    ),
+
+  logout: () =>
+    request<{ status: boolean; message: string }>('/dtmoney-api/auth/logout', {
       method: 'POST',
-      body: JSON.stringify({ email, code }),
-      token: null,
     }),
 
   getAccount: () => request<ApiClientProfile>('/dtmoney-api/account'),
 
   listApiKeys: () => request<{ status: boolean; apiKeys: ApiKeyItem[] }>('/dtmoney-api/api-keys'),
 
-  createApiKey: (name?: string, scopes?: string[]) =>
+  createApiKey: (name?: string, scopes?: string[], environment?: 'TEST' | 'LIVE') =>
     request<{ status: boolean; message: string; apiKey: ApiKeyCreated }>('/dtmoney-api/api-keys', {
       method: 'POST',
-      body: JSON.stringify({ name, scopes }),
+      body: JSON.stringify({ name, scopes, environment }),
     }),
 
   revokeApiKey: (id: string) =>
@@ -100,9 +148,34 @@ export const api = {
     }),
 
   listWebhookEvents: () =>
-    request<{ status: boolean; events: WebhookEventDoc[]; signatureHeader: string; signatureFormat: string }>(
-      '/dtmoney-api/webhooks/events',
-    ),
+    request<{
+      status: boolean
+      events: WebhookEventDoc[]
+      signatureHeader: string
+      signatureFormat: string
+      deliveryHeader?: string
+      retryStrategy?: string
+      verificationExample?: string
+    }>('/dtmoney-api/webhooks/events'),
+
+  getPaymentMethods: () =>
+    request<{
+      status: boolean
+      enabledMethods: string[]
+      catalog: Array<{
+        type: string
+        label: string
+        enabled: boolean
+        available: boolean
+        comingSoon?: boolean
+      }>
+    }>('/dtmoney-api/payment-methods'),
+
+  updatePaymentMethods: (enabledMethods: string[]) =>
+    request<{ status: boolean; message: string; enabledMethods: string[] }>('/dtmoney-api/payment-methods', {
+      method: 'PUT',
+      body: JSON.stringify({ enabledMethods }),
+    }),
 }
 
 export function getApiBaseUrl() {

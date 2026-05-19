@@ -1,13 +1,18 @@
-const TOKEN_KEY = 'dtmoney_api_token'
 const CLIENT_KEY = 'dtmoney_api_client'
 
-export function getToken(): string | null {
-  if (typeof window === 'undefined') return null
-  return localStorage.getItem(TOKEN_KEY)
+/** Access token en mémoire uniquement (non persisté — limite l'exposition XSS). */
+let accessTokenMemory: string | null = null
+
+export function getAccessToken(): string | null {
+  return accessTokenMemory
 }
 
-export function setSession(token: string, client: { id: string; email: string; name: string | null; status: string }) {
-  localStorage.setItem(TOKEN_KEY, token)
+export function setAccessToken(token: string | null) {
+  accessTokenMemory = token
+}
+
+export function setClientStub(client: { id: string; email: string; name: string | null; status: string }) {
+  if (typeof window === 'undefined') return
   localStorage.setItem(CLIENT_KEY, JSON.stringify(client))
 }
 
@@ -23,10 +28,23 @@ export function getStoredClient() {
 }
 
 export function clearSession() {
-  localStorage.removeItem(TOKEN_KEY)
-  localStorage.removeItem(CLIENT_KEY)
+  accessTokenMemory = null
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem(CLIENT_KEY)
+  }
 }
 
 export function isAuthenticated(): boolean {
-  return Boolean(getToken())
+  return Boolean(accessTokenMemory)
+}
+
+/** @deprecated use getAccessToken */
+export function getToken(): string | null {
+  return getAccessToken()
+}
+
+/** @deprecated use setAccessToken + setClientStub */
+export function setSession(token: string, client: { id: string; email: string; name: string | null; status: string }) {
+  setAccessToken(token)
+  setClientStub(client)
 }

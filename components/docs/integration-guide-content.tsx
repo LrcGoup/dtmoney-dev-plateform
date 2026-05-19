@@ -84,19 +84,67 @@ export function IntegrationGuideContent() {
         <ol className="list-decimal space-y-2 pl-5">
           <li>L’utilisateur choisit « Payer avec DTMoney » et saisit son téléphone.</li>
           <li><strong className="text-white">Quote</strong> — vérifier solde + frais.</li>
+          <li><strong className="text-white">Initiate</strong> (recommandé) — obtenir un <code className="text-emerald-400">paymentToken</code> éphémère.</li>
           <li>Afficher le total TTC et collecter le <strong className="text-white">PIN</strong> client.</li>
           <li><strong className="text-white">Confirm</strong> — débit avec <code className="text-emerald-400">idempotencyKey</code> obligatoire.</li>
           <li>En cas de timeout : <strong className="text-white">GET by-order/:orderId</strong>.</li>
         </ol>
       </Section>
 
-      <Section id="endpoints" title="7. Endpoints">
+      <Section id="secure-checkout" title="7. Checkout sécurisé (paymentToken)">
+        <p>Le mode legacy (clientPhone + amount dans confirm) reste supporté. Le mode token limite l’exposition des données de paiement côté partenaire.</p>
+        <Code>{`POST ${base}/dtmoney-api/payments/initiate
+{ "clientPhone": "242612345678", "amount": 5000, "orderId": "CMD-001" }
+
+→ { "paymentId": "...", "paymentToken": "...", "supportedMethods": ["WALLET_PHONE","DT_CARD"], "expiresIn": 300 }
+
+POST ${base}/dtmoney-api/payments/confirm
+{
+  "paymentToken": "pt_...",
+  "pin": "1234",
+  "idempotencyKey": "CMD-001-unique"
+}`}</Code>
+      </Section>
+
+      <Section id="payment-methods" title="8. Moyens de paiement (orchestration)">
+        <p>Tous les paiements utilisent <code className="text-emerald-400">POST /payments/confirm</code> avec un objet <code className="text-emerald-400">paymentMethod</code>.</p>
+        <Code>{`// Wallet orchestré
+{
+  "paymentMethod": { "type": "WALLET_PHONE", "phone": "242061234567" },
+  "pin": "1234",
+  "amount": 5000,
+  "idempotencyKey": "CMD-001"
+}
+
+// DTCard (token instrument — jamais de PAN/CVV)
+{
+  "paymentMethod": { "type": "DT_CARD", "cardToken": "card_xxx" },
+  "pin": "1234",
+  "amount": 5000,
+  "idempotencyKey": "CMD-002"
+}
+
+// Legacy (toujours supporté)
+{
+  "clientPhone": "242061234567",
+  "pin": "1234",
+  "amount": 5000,
+  "idempotencyKey": "CMD-003"
+}`}</Code>
+        <p>Configurez les moyens activés depuis le dashboard → <strong className="text-white">Moyens de paiement</strong>.</p>
+      </Section>
+
+      <Section id="endpoints" title="9. Endpoints">
         <h3 className="font-medium text-white">POST /payments/quote</h3>
         <Code>{`POST ${base}/dtmoney-api/payments/quote
 dt-api-key: ...
 
 { "clientPhone": "242612345678", "amount": 5000 }`}</Code>
         <p>Retourne <code className="text-slate-400">balance</code>, <code className="text-slate-400">fees</code>, <code className="text-slate-400">totalAmount</code>, <code className="text-slate-400">accountBalance</code>.</p>
+
+        <h3 className="mt-6 font-medium text-white">POST /payments/initiate</h3>
+        <Code>{`POST ${base}/dtmoney-api/payments/initiate
+{ "clientPhone": "242612345678", "amount": 5000 }`}</Code>
 
         <h3 className="mt-6 font-medium text-white">POST /payments/confirm</h3>
         <Code>{`POST ${base}/dtmoney-api/payments/confirm
@@ -128,7 +176,7 @@ dt-api-key: ...`}</Code>
 { "clientPhone": "242612345678", "amount": 10000 }`}</Code>
       </Section>
 
-      <Section id="idempotency" title="8. Idempotence">
+      <Section id="idempotency" title="10. Idempotence">
         <p>
           Pour éviter un double encaissement (double clic, timeout, retry), envoyez une clé unique par paiement via{' '}
           <code className="text-emerald-400">idempotencyKey</code> ou l’en-tête <code className="text-emerald-400">Idempotency-Key</code>.
@@ -137,7 +185,7 @@ dt-api-key: ...`}</Code>
         <p>Utilisez aussi <code className="text-slate-400">orderId</code> pour la traçabilité et la réconciliation.</p>
       </Section>
 
-      <Section id="webhooks" title="9. Webhooks">
+      <Section id="webhooks" title="11. Webhooks">
         <p>
           Configurez l’URL et le secret depuis le{' '}
           <Link href="/dashboard/webhooks" className="text-emerald-400 hover:underline">dashboard webhooks</Link>{' '}
@@ -153,12 +201,23 @@ dt-api-key: ...`}</Code>
   "clientPhoneMasked": "242***5678",
   "timestamp": "2024-03-05T14:30:00.000Z",
   "orderId": "CMD-2024-001",
-  "idempotencyKey": "CMD-2024-001-unique"
+  "idempotencyKey": "CMD-2024-001-unique",
+  "paymentMethodType": "WALLET_PHONE"
 }`}</Code>
-        <p>Vérifiez HMAC-SHA256 sur le body brut. Retries : 3 tentatives (1s, 2s, 4s). Répondez 2xx sous 15s.</p>
+        <p>Vérifiez HMAC-SHA256 sur le body brut. Retries persistants (5 tentatives, backoff). Répondez 2xx sous 15s. En-tête <code className="text-slate-400">X-DTMoney-Delivery-Id</code> pour l’audit.</p>
       </Section>
 
-      <Section id="best-practices" title="10. Bonnes pratiques">
+      <Section id="security" title="11. Sécurité & limites">
+        <ul className="list-disc space-y-2 pl-5">
+          <li>Clés API hashées — format <code className="text-emerald-400">dt_live_*</code> / <code className="text-emerald-400">dt_test_*</code>, affichées une seule fois.</li>
+          <li>Scopes granulaires : <code className="text-slate-400">payments:read</code>, <code className="text-slate-400">payments:write</code>, etc.</li>
+          <li>Rate limiting : 100 req/min (TEST), 1000 req/min (LIVE) → HTTP 429.</li>
+          <li>Ne jamais stocker le PIN client — transiter uniquement lors du confirm.</li>
+          <li>Ledger double-écriture côté serveur pour audit et réconciliation.</li>
+        </ul>
+      </Section>
+
+      <Section id="best-practices" title="12. Bonnes pratiques">
         <ul className="list-disc space-y-2 pl-5">
           <li>HTTPS uniquement en production.</li>
           <li>PIN : ne jamais stocker, transiter uniquement lors du confirm.</li>
