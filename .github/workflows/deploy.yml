@@ -1,0 +1,49 @@
+# CD – dtmoney-developers
+# Déploie sur le VPS après succès du CI (push sur main).
+#
+# Secrets GitHub requis :
+#   SSH_HOST, SSH_USER, SSH_PRIVATE_KEY
+# Optionnel :
+#   DEPLOY_PATH (défaut : /root/dtmoney-developers)
+#   GH_PAT (si le remote Git sur le VPS est en HTTPS)
+
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+jobs:
+  deploy:
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: DEPLOY_PATH,GITHUB_REPOSITORY,GH_PAT
+          script: |
+            set -e
+            if [ ! -d "$DEPLOY_PATH" ]; then
+              echo "Error: directory does not exist: $DEPLOY_PATH"
+              echo "Clone the repo on the VPS first, e.g.: git clone <repo> $DEPLOY_PATH"
+              exit 1
+            fi
+            cd "$DEPLOY_PATH"
+            if [ -n "$GH_PAT" ]; then
+              git remote set-url origin "https://x-access-token:${GH_PAT}@github.com/${GITHUB_REPOSITORY}.git"
+            fi
+            git fetch origin
+            git reset --hard origin/main
+            bun install --frozen-lockfile
+            bun run build
+            sudo systemctl restart dt-developers || true
+        env:
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH || '/root/dtmoney-developers' }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GH_PAT: ${{ secrets.GH_PAT }}

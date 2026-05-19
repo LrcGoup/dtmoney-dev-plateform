@@ -1,0 +1,30 @@
+# dt-developers (Next.js) – service systemd
+# À installer sur le VPS :
+#   sudo cp config/dt-developers.service /etc/systemd/system/dt-developers.service
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable dt-developers
+#   sudo systemctl start dt-developers
+#
+# L’app écoute en interne sur 4023 ; Nginx TLS sur le port 4022 proxy vers 4023
+# (voir config/nginx-dt-developers-4022.conf).
+#
+# Adapter WorkingDirectory / ExecStart si le projet n’est pas sous /root/dtmoney-developers.
+# Node 22+ requis pour Next 16.
+
+[Unit]
+Description=DT-Developers (Next.js)
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/dtmoney-developers
+Environment=NODE_ENV=production
+Environment=PORT=4023
+EnvironmentFile=-/root/dtmoney-developers/.env
+ExecStart=/root/.nvm/versions/node/v22.22.0/bin/node /root/dtmoney-developers/node_modules/next/dist/bin/next start -p 4023
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
