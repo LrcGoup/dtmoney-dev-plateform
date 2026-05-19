@@ -10,7 +10,7 @@ import type {
 } from './types'
 import { getAccessToken, setAccessToken } from './auth-storage'
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000/api/v2'
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? '/api/v2'
 
 export class ApiError extends Error {
   statusCode: number
@@ -183,6 +183,10 @@ export function getApiBaseUrl() {
 }
 
 export function getSwaggerUrl() {
+  if (API_BASE.startsWith('/')) {
+    const apiOrigin = (process.env.NEXT_PUBLIC_API_ORIGIN ?? '').replace(/\/$/, '')
+    return apiOrigin ? `${apiOrigin}/api/docs/dtmoney-api` : '/api/docs/dtmoney-api'
+  }
   const root = API_BASE.replace(/\/api\/v2\/?$/, '')
   return `${root}/api/docs/dtmoney-api`
 }
