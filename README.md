@@ -17,7 +17,7 @@ Variable principale :
 
 - `NEXT_PUBLIC_API_URL` — ex. `http://localhost:4017/api/v2`
 
-## Lancer en dev
+## Lancer le projet en dev
 
 ```bash
 bun install
