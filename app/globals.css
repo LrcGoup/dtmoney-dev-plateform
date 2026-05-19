@@ -1,0 +1,80 @@
+@import "tailwindcss";
+
+:root {
+  --background: #020617;
+  --foreground: #f1f5f9;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+::selection {
+  background: rgb(16 185 129 / 0.35);
+}
+
+/* react-simple-phone-input — thème sombre DTMoney */
+.dtmoney-phone-input .flex.border {
+  border-color: rgb(51 65 85) !important;
+  background: rgb(15 23 42 / 0.8) !important;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.dtmoney-phone-input .bg-gray-100\/60 {
+  background: rgb(30 41 59) !important;
+  border-color: rgb(51 65 85) !important;
+}
+
+.dtmoney-phone-input input {
+  background: transparent !important;
+  color: rgb(241 245 249) !important;
+}
+
+.dtmoney-phone-input input::placeholder {
+  color: rgb(100 116 139);
+}
+
+.dtmoney-phone-input .text-sm {
+  color: rgb(203 213 225) !important;
+}
+
+.dtmoney-phone-input .bg-white {
+  background: rgb(15 23 42) !important;
+  border-color: rgb(51 65 85) !important;
+}
+
+.dtmoney-phone-input .hover\:bg-gray-100:hover {
+  background: rgb(30 41 59) !important;
+}
+
+.dtmoney-phone-input .bg-gray-200\/70 {
+  background: rgb(51 65 85 / 0.7) !important;
+}
+
+.dtmoney-phone-input .font-\[15px\] {
+  color: rgb(226 232 240) !important;
+}
+
+.dtmoney-phone-input .text-gray-500 {
+  color: rgb(148 163 184) !important;
+}
+
+.dtmoney-phone-input .border-\[\#0000001e\] {
+  border-color: rgb(51 65 85) !important;
+  background: rgb(30 41 59) !important;
+  color: rgb(241 245 249) !important;
+}
+
+.dtmoney-phone-input .cursor-pointer {
+  cursor: pointer;
+}
