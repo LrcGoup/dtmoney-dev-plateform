@@ -10,7 +10,22 @@ import type {
 } from './types'
 import { getAccessToken, setAccessToken } from './auth-storage'
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? '/api/v2'
+const PROXY_API_BASE = '/api/v2'
+
+/** En navigateur, préfère le proxy same-origin pour que le cookie refresh httpOnly survive au F5. */
+function resolveApiBase(): string {
+  const configured = process.env.NEXT_PUBLIC_API_URL ?? PROXY_API_BASE
+  if (configured.startsWith('/')) return configured.replace(/\/$/, '')
+  if (typeof window === 'undefined') return configured.replace(/\/$/, '')
+
+  try {
+    const target = new URL(configured, window.location.origin)
+    if (target.origin !== window.location.origin) return PROXY_API_BASE
+    return configured.replace(/\/$/, '')
+  } catch {
+    return PROXY_API_BASE
+  }
+}
 
 export class ApiError extends Error {
   statusCode: number
@@ -32,7 +47,7 @@ async function request<T>(
   const authToken = token !== undefined ? token : getAccessToken()
   if (authToken) headers.set('Authorization', `Bearer ${authToken}`)
 
-  const res = await fetch(`${API_BASE}${path}`, {
+  const res = await fetch(`${resolveApiBase()}${path}`, {
     ...init,
     headers,
     credentials: 'include',
@@ -43,7 +58,7 @@ async function request<T>(
       const refreshed = await refreshAccessToken()
       setAccessToken(refreshed.accessToken)
       headers.set('Authorization', `Bearer ${refreshed.accessToken}`)
-      const retry = await fetch(`${API_BASE}${path}`, { ...init, headers, credentials: 'include' })
+      const retry = await fetch(`${resolveApiBase()}${path}`, { ...init, headers, credentials: 'include' })
       const retryJson = (await retry.json()) as ApiResponse<T>
       if (!retryJson.ok) {
         throw new ApiError(
@@ -73,7 +88,7 @@ async function request<T>(
 }
 
 async function refreshAccessToken() {
-  const res = await fetch(`${API_BASE}/dtmoney-api/auth/refresh`, {
+  const res = await fetch(`${resolveApiBase()}/dtmoney-api/auth/refresh`, {
     method: 'POST',
     credentials: 'include',
   })
@@ -179,14 +194,22 @@ export const api = {
 }
 
 export function getApiBaseUrl() {
-  return API_BASE
+  const configured = process.env.NEXT_PUBLIC_API_URL ?? PROXY_API_BASE
+  if (configured.startsWith('/')) {
+    const publicOrigin = process.env.NEXT_PUBLIC_API_ORIGIN?.replace(/\/$/, '')
+    if (publicOrigin) return `${publicOrigin}/api/v2`
+    if (typeof window !== 'undefined') return `${window.location.origin}${configured}`
+    return 'http://localhost:4017/api/v2'
+  }
+  return configured.replace(/\/$/, '')
 }
 
 export function getSwaggerUrl() {
-  if (API_BASE.startsWith('/')) {
-    const apiOrigin = (process.env.NEXT_PUBLIC_API_ORIGIN ?? '').replace(/\/$/, '')
-    return apiOrigin ? `${apiOrigin}/api/docs/dtmoney-api` : '/api/docs/dtmoney-api'
+  const configured = process.env.NEXT_PUBLIC_API_URL ?? PROXY_API_BASE
+  if (configured.startsWith('/')) {
+    const apiOrigin = (process.env.NEXT_PUBLIC_API_ORIGIN ?? 'http://localhost:4017').replace(/\/$/, '')
+    return `${apiOrigin}/api/docs/dtmoney-api`
   }
-  const root = API_BASE.replace(/\/api\/v2\/?$/, '')
+  const root = configured.replace(/\/api\/v2\/?$/, '')
   return `${root}/api/docs/dtmoney-api`
 }

@@ -58,7 +58,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const refreshed = await api.refreshSession()
         setAccessToken(refreshed.accessToken)
         setToken(refreshed.accessToken)
-        if (refreshed.apiClient) setClient(refreshed.apiClient)
+        if (refreshed.apiClient) {
+          setClient(refreshed.apiClient)
+          setClientStub(refreshed.apiClient)
+        }
         await refreshAccount()
       } catch {
         const existing = getAccessToken()

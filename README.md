@@ -13,9 +13,13 @@ Plateforme développeurs Next.js pour gérer les comptes DTMoney API (clés API,
 cp .env.local.example .env.local
 ```
 
-Variable principale :
+Variables (voir `.env.local.example`) :
 
-- `NEXT_PUBLIC_API_URL` — ex. `http://localhost:4017/api/v2`
+- `NEXT_PUBLIC_API_URL=/api/v2` — appels API via proxy Next (same-origin, cookie refresh au F5)
+- `API_PROXY_TARGET=http://localhost:4017` — backend NestJS local
+- `NEXT_PUBLIC_API_ORIGIN` — URL publique affichée (Swagger, doc intégration)
+
+> Ne pointez pas le navigateur directement vers `:4017` : le refresh token est un cookie httpOnly sur l’origine du portail. Un F5 perd l’access token (mémoire) ; la session est restaurée via ce cookie.
 
 ## Lancer le projet en dev
 
@@ -45,5 +49,5 @@ Ouvrir [http://localhost:3000](http://localhost:3000).
 - Next.js 16 (App Router)
 - React 19
 - Tailwind CSS 4
-- Auth JWT (localStorage) → endpoints `/api/v2/dtmoney-api/*`
+- Auth JWT (access token en mémoire + refresh httpOnly cookie) → `/api/v2/dtmoney-api/*`
 # dtmoney-dev-plateform
