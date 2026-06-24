@@ -1,0 +1,14 @@
+---
+description: Point d'entrée écosystème Ride/DTMoney — lire avant d'explorer le code
+alwaysApply: true
+---
+
+# Ecosystem context
+
+Avant toute exploration large du codebase :
+
+1. Lire `D:\Projects\ride-platform-docs\INDEX.md`
+2. Lire `AGENTS.md` à la racine de ce repo
+3. Guide intégration : `D:\Projects\ride-platform-docs\integrations/payments-dtmoney.md`
+
+Skill complémentaire (si disponible) : `ride-ecosystem`.
