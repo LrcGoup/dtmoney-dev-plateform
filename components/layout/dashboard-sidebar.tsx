@@ -8,6 +8,7 @@ const links = [
   { href: '/dashboard', label: 'Vue d’ensemble', exact: true },
   { href: '/dashboard/api-keys', label: 'Clés API' },
   { href: '/dashboard/webhooks', label: 'Webhooks' },
+  { href: '/dashboard/provider-settlement', label: 'Provider & settlement' },
   { href: '/dashboard/payment-methods', label: 'Moyens de paiement' },
   { href: '/dashboard/docs', label: 'Documentation' },
 ]

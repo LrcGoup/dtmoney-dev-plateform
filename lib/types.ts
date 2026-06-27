@@ -15,6 +15,9 @@ export interface ApiClientProfile {
   webhookSecretConfigured: boolean
   userId: string
   dtmoneyPhone: string | null
+  providerCode: string | null
+  settlementCreditAccountType: 'PRIMARY' | 'PROVIDER_EARNINGS'
+  providerDisplayLabel: string | null
   createdAt: string
 }
 

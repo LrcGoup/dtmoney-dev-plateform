@@ -176,7 +176,47 @@ dt-api-key: ...`}</Code>
 { "clientPhone": "242612345678", "amount": 10000 }`}</Code>
       </Section>
 
-      <Section id="idempotency" title="10. Idempotence">
+      <Section id="refunds" title="10. Remboursements & dettes partenaire">
+        <p>
+          DTMoney prend en charge le remboursement intégral (montant + frais), crédité sur le wallet client.
+          Si le solde partenaire est insuffisant, la plateforme avance et enregistre une dette récupérée ensuite
+          automatiquement (FIFO) sur les encaissements futurs.
+        </p>
+
+        <h3 className="font-medium text-white">POST /payments/refund</h3>
+        <Code>{`POST ${base}/dtmoney-api/payments/refund
+dt-api-key: ...
+Idempotency-Key: refund-CMD-2024-001
+
+{
+  "orderId": "CMD-2024-001",
+  "amount": 5000,
+  "includeFees": true,
+  "idempotencyKey": "refund-CMD-2024-001",
+  "reason": "order.cancelled"
+}`}</Code>
+        <p>
+          Vous pouvez cibler un paiement via <code className="text-slate-400">orderId</code> ou{' '}
+          <code className="text-slate-400">operationId</code>. La clé d’idempotence est obligatoire.
+        </p>
+
+        <h3 className="mt-6 font-medium text-white">GET /payments/refunds/by-order/:orderId</h3>
+        <Code>{`GET ${base}/dtmoney-api/payments/refunds/by-order/CMD-2024-001
+dt-api-key: ...`}</Code>
+        <p>
+          Retourne le total payé, les remboursements exécutés, le solde remboursable et les dettes ouvertes liées
+          à ce paiement.
+        </p>
+
+        <h3 className="mt-6 font-medium text-white">GET /payments/refunds/debt-alerts?threshold=...</h3>
+        <Code>{`GET ${base}/dtmoney-api/payments/refunds/debt-alerts?threshold=100000
+dt-api-key: ...`}</Code>
+        <p>
+          Liste les dettes ouvertes au-dessus d’un seuil pour faciliter l’alerting opérationnel (monitoring backoffice).
+        </p>
+      </Section>
+
+      <Section id="idempotency" title="11. Idempotence">
         <p>
           Pour éviter un double encaissement (double clic, timeout, retry), envoyez une clé unique par paiement via{' '}
           <code className="text-emerald-400">idempotencyKey</code> ou l’en-tête <code className="text-emerald-400">Idempotency-Key</code>.
@@ -185,12 +225,15 @@ dt-api-key: ...`}</Code>
         <p>Utilisez aussi <code className="text-slate-400">orderId</code> pour la traçabilité et la réconciliation.</p>
       </Section>
 
-      <Section id="webhooks" title="11. Webhooks">
+      <Section id="webhooks" title="12. Webhooks">
         <p>
           Configurez l’URL et le secret depuis le{' '}
           <Link href="/dashboard/webhooks" className="text-emerald-400 hover:underline">dashboard webhooks</Link>{' '}
           (JWT). Événements : <code className="text-emerald-400">payment.succeeded</code>,{' '}
-          <code className="text-emerald-400">deposit.succeeded</code>.
+          <code className="text-emerald-400">deposit.succeeded</code>,{' '}
+          <code className="text-emerald-400">payment.refunded</code>,{' '}
+          <code className="text-emerald-400">refund.debt.created</code>,{' '}
+          <code className="text-emerald-400">refund.debt.recovered</code>.
         </p>
         <p>En-têtes : <code className="text-slate-400">X-DTMoney-Event</code>, <code className="text-slate-400">X-DTMoney-Signature: sha256=&lt;hmac&gt;</code>.</p>
         <Code>{`{
@@ -207,7 +250,7 @@ dt-api-key: ...`}</Code>
         <p>Vérifiez HMAC-SHA256 sur le body brut. Retries persistants (5 tentatives, backoff). Répondez 2xx sous 15s. En-tête <code className="text-slate-400">X-DTMoney-Delivery-Id</code> pour l’audit.</p>
       </Section>
 
-      <Section id="security" title="11. Sécurité & limites">
+      <Section id="security" title="13. Sécurité & limites">
         <ul className="list-disc space-y-2 pl-5">
           <li>Clés API hashées — format <code className="text-emerald-400">dt_live_*</code> / <code className="text-emerald-400">dt_test_*</code>, affichées une seule fois.</li>
           <li>Scopes granulaires : <code className="text-slate-400">payments:read</code>, <code className="text-slate-400">payments:write</code>, etc.</li>
@@ -217,7 +260,7 @@ dt-api-key: ...`}</Code>
         </ul>
       </Section>
 
-      <Section id="best-practices" title="12. Bonnes pratiques">
+      <Section id="best-practices" title="14. Bonnes pratiques">
         <ul className="list-disc space-y-2 pl-5">
           <li>HTTPS uniquement en production.</li>
           <li>PIN : ne jamais stocker, transiter uniquement lors du confirm.</li>

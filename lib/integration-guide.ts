@@ -16,6 +16,7 @@ export const integrationGuideSections = [
   { id: 'secure-checkout', title: 'Checkout sécurisé' },
   { id: 'payment-methods', title: 'Moyens de paiement' },
   { id: 'endpoints', title: 'Endpoints' },
+  { id: 'refunds', title: 'Remboursements & dettes' },
   { id: 'idempotency', title: 'Idempotence' },
   { id: 'webhooks', title: 'Webhooks' },
   { id: 'security', title: 'Sécurité & limites' },

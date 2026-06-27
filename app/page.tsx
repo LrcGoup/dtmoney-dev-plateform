@@ -52,7 +52,7 @@ Headers:
             },
             {
               title: 'Webhooks HMAC',
-              desc: 'Recevez payment.succeeded et deposit.succeeded avec signature X-DTMoney-Signature.',
+              desc: 'Recevez payment.succeeded, payment.refunded et événements de dette avec signature X-DTMoney-Signature.',
             },
           ].map((f) => (
             <div key={f.title} className="rounded-xl border border-slate-800 bg-slate-900/40 p-6">

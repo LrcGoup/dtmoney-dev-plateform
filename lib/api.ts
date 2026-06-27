@@ -139,6 +139,16 @@ export const api = {
 
   getAccount: () => request<ApiClientProfile>('/dtmoney-api/account'),
 
+  updateAccountProvider: (payload: {
+    providerCode?: string | null
+    settlementCreditAccountType?: 'PRIMARY' | 'PROVIDER_EARNINGS'
+    providerDisplayLabel?: string | null
+  }) =>
+    request<{ status: boolean; message: string; account: ApiClientProfile }>('/dtmoney-api/account', {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    }),
+
   listApiKeys: () => request<{ status: boolean; apiKeys: ApiKeyItem[] }>('/dtmoney-api/api-keys'),
 
   createApiKey: (name?: string, scopes?: string[], environment?: 'TEST' | 'LIVE') =>

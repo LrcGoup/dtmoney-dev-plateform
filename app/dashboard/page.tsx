@@ -37,6 +37,14 @@ export default function DashboardPage() {
                 <dd className="text-slate-200">{account.dtmoneyPhone ?? '—'}</dd>
               </div>
               <div className="flex justify-between gap-4">
+                <dt className="text-slate-500">Provider</dt>
+                <dd className="text-slate-200">
+                  {account.providerCode
+                    ? `${account.providerDisplayLabel ?? account.providerCode} (${account.settlementCreditAccountType})`
+                    : '—'}
+                </dd>
+              </div>
+              <div className="flex justify-between gap-4">
                 <dt className="text-slate-500">Webhook</dt>
                 <dd className="truncate text-slate-400">{account.webhookUrl ?? 'Non configuré'}</dd>
               </div>
@@ -64,6 +72,15 @@ export default function DashboardPage() {
             </li>
             <li>
               3.{' '}
+              <Link href="/dashboard/provider-settlement" className="text-emerald-400 hover:underline">
+                Configurer provider & settlement
+              </Link>
+              {account && !account.providerCode ? (
+                <span className="ml-1 text-amber-400">(si gains séparés)</span>
+              ) : null}
+            </li>
+            <li>
+              4.{' '}
               <Link href="/dashboard/docs" className="text-emerald-400 hover:underline">
                 Lire le guide d’intégration
               </Link>
