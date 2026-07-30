@@ -1,9 +1,18 @@
-import { getApiBaseUrl, getSwaggerUrl } from '@/lib/api'
+import {
+  getApiBaseUrl,
+  getApiMountPath,
+  getBusinessApiKeyHeader,
+  getProductLabel,
+  getSwaggerUrl,
+} from '@/lib/api'
 
 export function getIntegrationGuideMeta() {
   const base = getApiBaseUrl()
   const swagger = getSwaggerUrl()
-  return { base, swagger }
+  const mount = getApiMountPath()
+  const keyHeader = getBusinessApiKeyHeader()
+  const product = getProductLabel()
+  return { base, swagger, mount, keyHeader, product, connectV3: true as const }
 }
 
 export const integrationGuideSections = [

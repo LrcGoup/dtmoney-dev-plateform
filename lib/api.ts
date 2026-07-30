@@ -1,16 +1,28 @@
 import type {
-  ApiClientProfile,
   ApiKeyCreated,
   ApiKeyItem,
   ApiResponse,
   AuthLoginData,
+  ConnectAppProfile,
   RegisterPayload,
   WalletPhoneVerification,
   WebhookEventDoc,
 } from './types'
 import { getAccessToken, setAccessToken } from './auth-storage'
 
-const PROXY_API_BASE = '/api/v2'
+const PROXY_API_BASE = '/api/v3'
+
+export function getApiMountPath(): 'connect' {
+  return 'connect'
+}
+
+export function getBusinessApiKeyHeader(): 'dt-connect-key' {
+  return 'dt-connect-key'
+}
+
+export function getProductLabel(): string {
+  return 'DT Connect API'
+}
 
 /** En navigateur, préfère le proxy same-origin pour que le cookie refresh httpOnly survive au F5. */
 function resolveApiBase(): string {
@@ -25,6 +37,11 @@ function resolveApiBase(): string {
   } catch {
     return PROXY_API_BASE
   }
+}
+
+function mountPath(suffix: string): string {
+  const normalized = suffix.startsWith('/') ? suffix : `/${suffix}`
+  return `/connect${normalized}`
 }
 
 export class ApiError extends Error {
@@ -88,7 +105,7 @@ async function request<T>(
 }
 
 async function refreshAccessToken() {
-  const res = await fetch(`${resolveApiBase()}/dtmoney-api/auth/refresh`, {
+  const res = await fetch(`${resolveApiBase()}${mountPath('/auth/refresh')}`, {
     method: 'POST',
     credentials: 'include',
   })
@@ -99,75 +116,108 @@ async function refreshAccessToken() {
   return json.data
 }
 
+function unwrapAccountProfile(
+  data: ConnectAppProfile | { connectApp: ConnectAppProfile; account?: ConnectAppProfile },
+): ConnectAppProfile {
+  if (data && typeof data === 'object' && 'connectApp' in data && data.connectApp) {
+    return data.connectApp
+  }
+  return data as ConnectAppProfile
+}
+
 export const api = {
   refreshSession: refreshAccessToken,
 
   verifyWalletPhone: (phone: string) =>
-    request<WalletPhoneVerification>('/dtmoney-api/auth/verify-wallet-phone', {
+    request<WalletPhoneVerification>(mountPath('/auth/verify-wallet-phone'), {
       method: 'POST',
       body: JSON.stringify({ phone }),
       token: null,
     }),
 
   register: (payload: RegisterPayload) =>
-    request<{ status: boolean; message: string; apiClientId: string; email: string; devVerificationCode?: string }>(
-      '/dtmoney-api/auth/register',
-      { method: 'POST', body: JSON.stringify(payload), token: null },
-    ),
+    request<{
+      status: boolean
+      message: string
+      email: string
+      connectAppId?: string
+      apiClientId?: string
+      devVerificationCode?: string
+    }>(mountPath('/auth/register'), { method: 'POST', body: JSON.stringify(payload), token: null }),
 
   login: (email: string, password: string) =>
-    request<AuthLoginData>('/dtmoney-api/auth/login', {
+    request<AuthLoginData>(mountPath('/auth/login'), {
       method: 'POST',
       body: JSON.stringify({ email, password }),
       token: null,
     }),
 
   verifyEmail: (email: string, code: string) =>
-    request<{ status: boolean; message: string; accessToken: string; expiresIn: number }>(
-      '/dtmoney-api/auth/verify-email',
-      {
-        method: 'POST',
-        body: JSON.stringify({ email, code }),
-        token: null,
-      },
-    ),
+    request<{
+      status: boolean
+      message: string
+      accessToken: string
+      expiresIn: number
+      connectAppId?: string
+      apiClientId?: string
+    }>(mountPath('/auth/verify-email'), {
+      method: 'POST',
+      body: JSON.stringify({ email, code }),
+      token: null,
+    }),
 
   logout: () =>
-    request<{ status: boolean; message: string }>('/dtmoney-api/auth/logout', {
+    request<{ status: boolean; message: string }>(mountPath('/auth/logout'), {
       method: 'POST',
     }),
 
-  getAccount: () => request<ApiClientProfile>('/dtmoney-api/account'),
+  getAccount: async () => {
+    const data = await request<ConnectAppProfile | { connectApp: ConnectAppProfile }>(
+      mountPath('/account'),
+    )
+    return unwrapAccountProfile(data)
+  },
 
-  updateAccountProvider: (payload: {
+  updateAccountProvider: async (payload: {
     providerCode?: string | null
     settlementCreditAccountType?: 'PRIMARY' | 'PROVIDER_EARNINGS'
     providerDisplayLabel?: string | null
-  }) =>
-    request<{ status: boolean; message: string; account: ApiClientProfile }>('/dtmoney-api/account', {
+  }) => {
+    const data = await request<{
+      status: boolean
+      message: string
+      account?: ConnectAppProfile
+      connectApp?: ConnectAppProfile
+    }>(mountPath('/account'), {
       method: 'PATCH',
       body: JSON.stringify(payload),
-    }),
+    })
+    return {
+      status: data.status,
+      message: data.message,
+      account: data.connectApp ?? data.account!,
+    }
+  },
 
-  listApiKeys: () => request<{ status: boolean; apiKeys: ApiKeyItem[] }>('/dtmoney-api/api-keys'),
+  listApiKeys: () => request<{ status: boolean; apiKeys: ApiKeyItem[] }>(mountPath('/api-keys')),
 
   createApiKey: (name?: string, scopes?: string[], environment?: 'TEST' | 'LIVE') =>
-    request<{ status: boolean; message: string; apiKey: ApiKeyCreated }>('/dtmoney-api/api-keys', {
+    request<{ status: boolean; message: string; apiKey: ApiKeyCreated }>(mountPath('/api-keys'), {
       method: 'POST',
       body: JSON.stringify({ name, scopes, environment }),
     }),
 
   revokeApiKey: (id: string) =>
-    request<{ status: boolean; message: string }>(`/dtmoney-api/api-keys/${id}`, { method: 'DELETE' }),
+    request<{ status: boolean; message: string }>(mountPath(`/api-keys/${id}`), { method: 'DELETE' }),
 
   rotateApiKey: (id: string, name?: string) =>
     request<{ status: boolean; message: string; apiKey: ApiKeyCreated & { rotatedFrom: string } }>(
-      `/dtmoney-api/api-keys/${id}/rotate`,
+      mountPath(`/api-keys/${id}/rotate`),
       { method: 'POST', body: JSON.stringify({ name }) },
     ),
 
   updateWebhooks: (webhookUrl?: string | null, webhookSecret?: string | null) =>
-    request<{ status: boolean; message: string }>('/dtmoney-api/webhooks', {
+    request<{ status: boolean; message: string }>(mountPath('/webhooks'), {
       method: 'PUT',
       body: JSON.stringify({ webhookUrl, webhookSecret }),
     }),
@@ -181,7 +231,7 @@ export const api = {
       deliveryHeader?: string
       retryStrategy?: string
       verificationExample?: string
-    }>('/dtmoney-api/webhooks/events'),
+    }>(mountPath('/webhooks/events')),
 
   getPaymentMethods: () =>
     request<{
@@ -194,10 +244,10 @@ export const api = {
         available: boolean
         comingSoon?: boolean
       }>
-    }>('/dtmoney-api/payment-methods'),
+    }>(mountPath('/payment-methods')),
 
   updatePaymentMethods: (enabledMethods: string[]) =>
-    request<{ status: boolean; message: string; enabledMethods: string[] }>('/dtmoney-api/payment-methods', {
+    request<{ status: boolean; message: string; enabledMethods: string[] }>(mountPath('/payment-methods'), {
       method: 'PUT',
       body: JSON.stringify({ enabledMethods }),
     }),
@@ -207,9 +257,9 @@ export function getApiBaseUrl() {
   const configured = process.env.NEXT_PUBLIC_API_URL ?? PROXY_API_BASE
   if (configured.startsWith('/')) {
     const publicOrigin = process.env.NEXT_PUBLIC_API_ORIGIN?.replace(/\/$/, '')
-    if (publicOrigin) return `${publicOrigin}/api/v2`
+    if (publicOrigin) return `${publicOrigin}/api/v3`
     if (typeof window !== 'undefined') return `${window.location.origin}${configured}`
-    return 'http://localhost:4017/api/v2'
+    return 'http://localhost:4017/api/v3'
   }
   return configured.replace(/\/$/, '')
 }
@@ -218,8 +268,8 @@ export function getSwaggerUrl() {
   const configured = process.env.NEXT_PUBLIC_API_URL ?? PROXY_API_BASE
   if (configured.startsWith('/')) {
     const apiOrigin = (process.env.NEXT_PUBLIC_API_ORIGIN ?? 'http://localhost:4017').replace(/\/$/, '')
-    return `${apiOrigin}/api/docs/dtmoney-api`
+    return `${apiOrigin}/api/docs/connect`
   }
-  const root = configured.replace(/\/api\/v2\/?$/, '')
-  return `${root}/api/docs/dtmoney-api`
+  const root = configured.replace(/\/api\/v[23]\/?$/, '')
+  return `${root}/api/docs/connect`
 }

@@ -3,12 +3,13 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { api } from '@/lib/api'
 import { clearSession, getAccessToken, getStoredClient, setAccessToken, setClientStub } from '@/lib/auth-storage'
-import type { ApiClientProfile } from '@/lib/types'
+import type { ConnectAppProfile } from '@/lib/types'
+import { sessionAppFromAuth } from '@/lib/types'
 
 interface AuthContextValue {
   token: string | null
   client: { id: string; email: string; name: string | null; status: string } | null
-  account: ApiClientProfile | null
+  account: ConnectAppProfile | null
   loading: boolean
   login: (email: string, password: string) => Promise<void>
   logout: () => Promise<void>
@@ -21,7 +22,7 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null)
   const [client, setClient] = useState<AuthContextValue['client']>(null)
-  const [account, setAccount] = useState<ApiClientProfile | null>(null)
+  const [account, setAccount] = useState<ConnectAppProfile | null>(null)
   const [loading, setLoading] = useState(true)
 
   const refreshAccount = useCallback(async () => {
@@ -58,9 +59,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const refreshed = await api.refreshSession()
         setAccessToken(refreshed.accessToken)
         setToken(refreshed.accessToken)
-        if (refreshed.apiClient) {
-          setClient(refreshed.apiClient)
-          setClientStub(refreshed.apiClient)
+        const sessionApp = sessionAppFromAuth(refreshed)
+        if (sessionApp) {
+          setClient(sessionApp)
+          setClientStub(sessionApp)
         }
         await refreshAccount()
       } catch {
@@ -79,8 +81,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await api.login(email, password)
       setAccessToken(data.accessToken)
       setToken(data.accessToken)
-      setClient(data.apiClient)
-      setClientStub(data.apiClient)
+      const sessionApp = sessionAppFromAuth(data)
+      if (sessionApp) {
+        setClient(sessionApp)
+        setClientStub(sessionApp)
+      }
       await refreshAccount()
     },
     [refreshAccount],

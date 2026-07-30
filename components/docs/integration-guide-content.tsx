@@ -19,16 +19,16 @@ function Section({ id, title, children }: { id: string; title: string; children:
 }
 
 export function IntegrationGuideContent() {
-  const { base, swagger } = getIntegrationGuideMeta()
+  const { base, swagger, mount, keyHeader, product } = getIntegrationGuideMeta()
 
   return (
     <article className="space-y-10">
       <header>
         <p className="text-sm font-medium uppercase tracking-wider text-emerald-400">Documentation</p>
-        <h1 className="mt-2 text-3xl font-bold text-white">Guide d’intégration DTMoney API</h1>
+        <h1 className="mt-2 text-3xl font-bold text-white">Guide d’intégration {product}</h1>
         <p className="mt-4 max-w-2xl text-slate-400">
           Intégrez les paiements DTMoney dans votre marketplace, e-commerce ou application mobile via l’API REST
-          développeur. Ce guide est réservé aux comptes connectés — l’API v2 expose les endpoints et le Swagger
+          développeur. Ce guide est réservé aux comptes connectés — DT Connect API v3 expose les endpoints et le Swagger
           technique.
         </p>
       </header>
@@ -47,11 +47,11 @@ export function IntegrationGuideContent() {
 
       <Section id="base-url" title="2. Base URL">
         <p>Toutes les routes métier sont sous :</p>
-        <Code>{`${base}/dtmoney-api/...`}</Code>
+        <Code>{`${base}/${mount}/...`}</Code>
         <p>
           Référence interactive OpenAPI :{' '}
           <a href={swagger} target="_blank" rel="noreferrer" className="text-emerald-400 hover:underline">
-            Swagger DTMoney API
+            Swagger {product}
           </a>
         </p>
       </Section>
@@ -64,12 +64,12 @@ export function IntegrationGuideContent() {
           <li>Vérification email (code OTP).</li>
           <li>Connexion JWT → création de clé(s) API → configuration webhooks.</li>
         </ol>
-        <p>La gestion des clés et webhooks se fait via JWT (dashboard). Les appels métier utilisent <code className="text-emerald-400">dt-api-key</code>.</p>
+        <p>La gestion des clés et webhooks se fait via JWT (dashboard). Les appels métier utilisent <code className="text-emerald-400">{keyHeader}</code>.</p>
       </Section>
 
       <Section id="authentication" title="4. Authentification API">
         <p>Chaque requête métier inclut :</p>
-        <Code>{`dt-api-key: votre_cle_api_secrete`}</Code>
+        <Code>{`${keyHeader}: votre_cle_api_secrete`}</Code>
         <p>En cas d’absence ou de clé invalide : <strong className="text-white">401</strong> avec <code className="text-slate-400">error.message</code>.</p>
       </Section>
 
@@ -93,12 +93,12 @@ export function IntegrationGuideContent() {
 
       <Section id="secure-checkout" title="7. Checkout sécurisé (paymentToken)">
         <p>Le mode legacy (clientPhone + amount dans confirm) reste supporté. Le mode token limite l’exposition des données de paiement côté partenaire.</p>
-        <Code>{`POST ${base}/dtmoney-api/payments/initiate
+        <Code>{`POST ${base}/${mount}/payments/initiate
 { "clientPhone": "242612345678", "amount": 5000, "orderId": "CMD-001" }
 
 → { "paymentId": "...", "paymentToken": "...", "supportedMethods": ["WALLET_PHONE","DT_CARD"], "expiresIn": 300 }
 
-POST ${base}/dtmoney-api/payments/confirm
+POST ${base}/${mount}/payments/confirm
 {
   "paymentToken": "pt_...",
   "pin": "1234",
@@ -136,20 +136,20 @@ POST ${base}/dtmoney-api/payments/confirm
 
       <Section id="endpoints" title="9. Endpoints">
         <h3 className="font-medium text-white">POST /payments/quote</h3>
-        <Code>{`POST ${base}/dtmoney-api/payments/quote
-dt-api-key: ...
+        <Code>{`POST ${base}/${mount}/payments/quote
+${keyHeader}: ...
 
 { "clientPhone": "242612345678", "amount": 5000 }`}</Code>
         <p>Retourne <code className="text-slate-400">balance</code>, <code className="text-slate-400">fees</code>, <code className="text-slate-400">totalAmount</code>, <code className="text-slate-400">accountBalance</code>.</p>
 
         <h3 className="mt-6 font-medium text-white">POST /payments/initiate</h3>
-        <Code>{`POST ${base}/dtmoney-api/payments/initiate
+        <Code>{`POST ${base}/${mount}/payments/initiate
 { "clientPhone": "242612345678", "amount": 5000 }`}</Code>
 
         <h3 className="mt-6 font-medium text-white">POST /payments/confirm</h3>
-        <Code>{`POST ${base}/dtmoney-api/payments/confirm
+        <Code>{`POST ${base}/${mount}/payments/confirm
 Content-Type: application/json
-dt-api-key: ...
+${keyHeader}: ...
 Idempotency-Key: CMD-2024-001-unique
 
 {
@@ -162,16 +162,16 @@ Idempotency-Key: CMD-2024-001-unique
         <p><code className="text-emerald-400">idempotencyKey</code> est <strong className="text-white">obligatoire</strong> (body ou en-tête <code className="text-slate-400">Idempotency-Key</code>).</p>
 
         <h3 className="mt-6 font-medium text-white">GET /payments/by-order/:orderId</h3>
-        <Code>{`GET ${base}/dtmoney-api/payments/by-order/CMD-2024-001
-dt-api-key: ...`}</Code>
+        <Code>{`GET ${base}/${mount}/payments/by-order/CMD-2024-001
+${keyHeader}: ...`}</Code>
 
         <h3 className="mt-6 font-medium text-white">GET /customers/:phone/balance</h3>
-        <Code>{`GET ${base}/dtmoney-api/customers/242612345678/balance?amount=5000
-dt-api-key: ...`}</Code>
+        <Code>{`GET ${base}/${mount}/customers/242612345678/balance?amount=5000
+${keyHeader}: ...`}</Code>
 
         <h3 className="mt-6 font-medium text-white">POST /payments/deposit (Agents uniquement)</h3>
         <p>Dépôt cash en point physique — ignoré pour une intégration purement en ligne.</p>
-        <Code>{`POST ${base}/dtmoney-api/payments/deposit
+        <Code>{`POST ${base}/${mount}/payments/deposit
 
 { "clientPhone": "242612345678", "amount": 10000 }`}</Code>
       </Section>
@@ -184,8 +184,8 @@ dt-api-key: ...`}</Code>
         </p>
 
         <h3 className="font-medium text-white">POST /payments/refund</h3>
-        <Code>{`POST ${base}/dtmoney-api/payments/refund
-dt-api-key: ...
+        <Code>{`POST ${base}/${mount}/payments/refund
+${keyHeader}: ...
 Idempotency-Key: refund-CMD-2024-001
 
 {
@@ -201,16 +201,16 @@ Idempotency-Key: refund-CMD-2024-001
         </p>
 
         <h3 className="mt-6 font-medium text-white">GET /payments/refunds/by-order/:orderId</h3>
-        <Code>{`GET ${base}/dtmoney-api/payments/refunds/by-order/CMD-2024-001
-dt-api-key: ...`}</Code>
+        <Code>{`GET ${base}/${mount}/payments/refunds/by-order/CMD-2024-001
+${keyHeader}: ...`}</Code>
         <p>
           Retourne le total payé, les remboursements exécutés, le solde remboursable et les dettes ouvertes liées
           à ce paiement.
         </p>
 
         <h3 className="mt-6 font-medium text-white">GET /payments/refunds/debt-alerts?threshold=...</h3>
-        <Code>{`GET ${base}/dtmoney-api/payments/refunds/debt-alerts?threshold=100000
-dt-api-key: ...`}</Code>
+        <Code>{`GET ${base}/${mount}/payments/refunds/debt-alerts?threshold=100000
+${keyHeader}: ...`}</Code>
         <p>
           Liste les dettes ouvertes au-dessus d’un seuil pour faciliter l’alerting opérationnel (monitoring backoffice).
         </p>

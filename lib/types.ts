@@ -2,7 +2,7 @@ export type ApiResponse<T> =
   | { ok: true; statusCode: number; data: T }
   | { ok: false; statusCode: number; error: { message: string } }
 
-export interface ApiClientProfile {
+export interface ConnectAppProfile {
   id: string
   email: string
   name: string | null
@@ -13,7 +13,8 @@ export interface ApiClientProfile {
   feePercentage: number
   webhookUrl: string | null
   webhookSecretConfigured: boolean
-  userId: string
+  userId: string | null
+  organizationId?: string | null
   dtmoneyPhone: string | null
   providerCode: string | null
   settlementCreditAccountType: 'PRIMARY' | 'PROVIDER_EARNINGS'
@@ -21,15 +22,30 @@ export interface ApiClientProfile {
   createdAt: string
 }
 
+/** @deprecated Use ConnectAppProfile — kept for transitional imports */
+export type ApiClientProfile = ConnectAppProfile
+
+export interface ConnectAppStub {
+  id: string
+  email: string
+  name: string | null
+  status: string
+}
+
 export interface AuthLoginData {
   status: boolean
   accessToken: string
-  apiClient: {
-    id: string
-    email: string
-    name: string | null
-    status: string
-  }
+  expiresIn?: number
+  /** v3 Connect vocabulary */
+  connectApp?: ConnectAppStub
+  connectAppId?: string
+  /** v2 legacy vocabulary */
+  apiClient?: ConnectAppStub
+  apiClientId?: string
+}
+
+export function sessionAppFromAuth(data: AuthLoginData): ConnectAppStub | null {
+  return data.connectApp ?? data.apiClient ?? null
 }
 
 export interface ApiKeyItem {

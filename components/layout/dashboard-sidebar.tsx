@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/cn'
+import { getProductLabel } from '@/lib/api'
 
 const links = [
   { href: '/dashboard', label: 'Vue d’ensemble', exact: true },
@@ -15,6 +16,7 @@ const links = [
 
 export function DashboardSidebar() {
   const pathname = usePathname()
+  const product = getProductLabel()
 
   return (
     <aside className="fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-slate-800 bg-slate-950">
@@ -24,7 +26,7 @@ export function DashboardSidebar() {
             DT
           </div>
           <div>
-            <div className="text-sm font-semibold text-white">DTMoney API</div>
+            <div className="text-sm font-semibold text-white">{product}</div>
             <div className="text-xs text-slate-500">Developer Platform</div>
           </div>
         </Link>
