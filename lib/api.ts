@@ -10,50 +10,38 @@ import type {
 } from './types'
 import { getAccessToken, setAccessToken } from './auth-storage'
 
-const PROXY_API_BASE_V2 = '/api/v2'
-const PROXY_API_BASE_V3 = '/api/v3'
+const PROXY_API_BASE = '/api/v3'
 
-/** Feature flag: dashboard + docs target DT Connect API v3. */
-export function useConnectV3(): boolean {
-  return process.env.NEXT_PUBLIC_DT_CONNECT_V3 === 'true'
+export function getApiMountPath(): 'connect' {
+  return 'connect'
 }
 
-export function getApiMountPath(): 'connect' | 'dtmoney-api' {
-  return useConnectV3() ? 'connect' : 'dtmoney-api'
-}
-
-export function getBusinessApiKeyHeader(): 'dt-connect-key' | 'dt-api-key' {
-  return useConnectV3() ? 'dt-connect-key' : 'dt-api-key'
+export function getBusinessApiKeyHeader(): 'dt-connect-key' {
+  return 'dt-connect-key'
 }
 
 export function getProductLabel(): string {
-  return useConnectV3() ? 'DT Connect API' : 'DTMoney API'
-}
-
-function defaultProxyBase(): string {
-  return useConnectV3() ? PROXY_API_BASE_V3 : PROXY_API_BASE_V2
+  return 'DT Connect API'
 }
 
 /** En navigateur, préfère le proxy same-origin pour que le cookie refresh httpOnly survive au F5. */
 function resolveApiBase(): string {
-  const fallback = defaultProxyBase()
-  const configured = process.env.NEXT_PUBLIC_API_URL ?? fallback
+  const configured = process.env.NEXT_PUBLIC_API_URL ?? PROXY_API_BASE
   if (configured.startsWith('/')) return configured.replace(/\/$/, '')
   if (typeof window === 'undefined') return configured.replace(/\/$/, '')
 
   try {
     const target = new URL(configured, window.location.origin)
-    if (target.origin !== window.location.origin) return fallback
+    if (target.origin !== window.location.origin) return PROXY_API_BASE
     return configured.replace(/\/$/, '')
   } catch {
-    return fallback
+    return PROXY_API_BASE
   }
 }
 
 function mountPath(suffix: string): string {
-  const mount = getApiMountPath()
   const normalized = suffix.startsWith('/') ? suffix : `/${suffix}`
-  return `/${mount}${normalized}`
+  return `/connect${normalized}`
 }
 
 export class ApiError extends Error {
@@ -184,9 +172,9 @@ export const api = {
     }),
 
   getAccount: async () => {
-    const data = await request<
-      ConnectAppProfile | { connectApp: ConnectAppProfile }
-    >(mountPath('/account'))
+    const data = await request<ConnectAppProfile | { connectApp: ConnectAppProfile }>(
+      mountPath('/account'),
+    )
     return unwrapAccountProfile(data)
   },
 
@@ -266,26 +254,22 @@ export const api = {
 }
 
 export function getApiBaseUrl() {
-  const fallback = defaultProxyBase()
-  const configured = process.env.NEXT_PUBLIC_API_URL ?? fallback
+  const configured = process.env.NEXT_PUBLIC_API_URL ?? PROXY_API_BASE
   if (configured.startsWith('/')) {
     const publicOrigin = process.env.NEXT_PUBLIC_API_ORIGIN?.replace(/\/$/, '')
-    const versionPath = useConnectV3() ? '/api/v3' : '/api/v2'
-    if (publicOrigin) return `${publicOrigin}${versionPath}`
+    if (publicOrigin) return `${publicOrigin}/api/v3`
     if (typeof window !== 'undefined') return `${window.location.origin}${configured}`
-    return `http://localhost:4017${versionPath}`
+    return 'http://localhost:4017/api/v3'
   }
   return configured.replace(/\/$/, '')
 }
 
 export function getSwaggerUrl() {
-  const docsPath = useConnectV3() ? '/api/docs/connect' : '/api/docs/dtmoney-api'
-  const fallback = defaultProxyBase()
-  const configured = process.env.NEXT_PUBLIC_API_URL ?? fallback
+  const configured = process.env.NEXT_PUBLIC_API_URL ?? PROXY_API_BASE
   if (configured.startsWith('/')) {
     const apiOrigin = (process.env.NEXT_PUBLIC_API_ORIGIN ?? 'http://localhost:4017').replace(/\/$/, '')
-    return `${apiOrigin}${docsPath}`
+    return `${apiOrigin}/api/docs/connect`
   }
   const root = configured.replace(/\/api\/v[23]\/?$/, '')
-  return `${root}${docsPath}`
+  return `${root}/api/docs/connect`
 }

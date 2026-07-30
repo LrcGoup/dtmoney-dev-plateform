@@ -4,7 +4,6 @@ import {
   getBusinessApiKeyHeader,
   getProductLabel,
   getSwaggerUrl,
-  useConnectV3,
 } from '@/lib/api'
 
 export function getIntegrationGuideMeta() {
@@ -13,8 +12,7 @@ export function getIntegrationGuideMeta() {
   const mount = getApiMountPath()
   const keyHeader = getBusinessApiKeyHeader()
   const product = getProductLabel()
-  const connectV3 = useConnectV3()
-  return { base, swagger, mount, keyHeader, product, connectV3 }
+  return { base, swagger, mount, keyHeader, product, connectV3: true as const }
 }
 
 export const integrationGuideSections = [

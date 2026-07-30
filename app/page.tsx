@@ -1,12 +1,10 @@
 import { MarketingNav } from '@/components/layout/marketing-nav'
 import { MarketingAuthActions } from '@/components/layout/marketing-auth-actions'
-import { getApiMountPath, getBusinessApiKeyHeader, useConnectV3 } from '@/lib/api'
+import { getApiMountPath, getBusinessApiKeyHeader } from '@/lib/api'
 
 export default function HomePage() {
-  const connectV3 = useConnectV3()
   const mount = getApiMountPath()
   const keyHeader = getBusinessApiKeyHeader()
-  const apiVersion = connectV3 ? 'v3' : 'v2'
 
   return (
     <div className="min-h-screen bg-slate-950">
@@ -34,8 +32,8 @@ export default function HomePage() {
           <div className="mt-16 overflow-hidden rounded-xl border border-slate-800 bg-slate-900/60 shadow-2xl">
             <pre className="overflow-x-auto p-6 text-sm leading-relaxed text-slate-300 font-[family-name:var(--font-geist-mono)]">
               {`# Exemple checkout
-POST /api/${apiVersion}/${mount}/payments/quote
-POST /api/${apiVersion}/${mount}/payments/confirm
+POST /api/v3/${mount}/payments/quote
+POST /api/v3/${mount}/payments/confirm
 
 Headers:
   ${keyHeader}: sk_live_••••••••••••

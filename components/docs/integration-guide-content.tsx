@@ -19,7 +19,7 @@ function Section({ id, title, children }: { id: string; title: string; children:
 }
 
 export function IntegrationGuideContent() {
-  const { base, swagger, mount, keyHeader, product, connectV3 } = getIntegrationGuideMeta()
+  const { base, swagger, mount, keyHeader, product } = getIntegrationGuideMeta()
 
   return (
     <article className="space-y-10">
@@ -28,7 +28,7 @@ export function IntegrationGuideContent() {
         <h1 className="mt-2 text-3xl font-bold text-white">Guide d’intégration {product}</h1>
         <p className="mt-4 max-w-2xl text-slate-400">
           Intégrez les paiements DTMoney dans votre marketplace, e-commerce ou application mobile via l’API REST
-          développeur. Ce guide est réservé aux comptes connectés — {connectV3 ? 'DT Connect API v3' : 'l’API v2'} expose les endpoints et le Swagger
+          développeur. Ce guide est réservé aux comptes connectés — DT Connect API v3 expose les endpoints et le Swagger
           technique.
         </p>
       </header>
