@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardDescription, CardTitle } from '@/components/ui/card'
 import { Input, Label } from '@/components/ui/input'
-import { api, ApiError } from '@/lib/api'
+import { api, ApiError, getBusinessApiKeyHeader } from '@/lib/api'
 import type { ApiKeyCreated, ApiKeyItem } from '@/lib/types'
 
 export default function ApiKeysPage() {
@@ -17,6 +17,7 @@ export default function ApiKeysPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState<string | null>(null)
+  const keyHeader = getBusinessApiKeyHeader()
 
   const load = useCallback(async () => {
     setError(null)
@@ -93,7 +94,7 @@ export default function ApiKeysPage() {
 
       <Card className="mb-6">
         <CardTitle>Créer une clé</CardTitle>
-        <CardDescription>Utilisez l’en-tête HTTP <code className="text-emerald-400">dt-api-key</code> pour authentifier vos appels.</CardDescription>
+        <CardDescription>Utilisez l’en-tête HTTP <code className="text-emerald-400">{keyHeader}</code> pour authentifier vos appels.</CardDescription>
         <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
           <div className="flex-1">
             <Label htmlFor="keyName">Nom (optionnel)</Label>
