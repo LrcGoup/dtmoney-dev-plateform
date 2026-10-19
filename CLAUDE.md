@@ -6,8 +6,8 @@
 
 Avant tout `grep`, `glob`, `find`, `ls` ou exploration large :
 
-1. Lire `D:\Projects\ride-platform-docs\INDEX.md`
-2. Lire `integrations/payments-dtmoney.md` + `integrations/api-envelopes.md`
+1. Lire `D:\Projects\dtmoney-platform-docs\INDEX.md`
+2. Lire `integrations/connect-payments.md`
 3. Lire `projects/dt-dev-platform.md`
 4. Lire **2–4** `.skills/` selon la tâche
 

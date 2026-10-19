@@ -8,7 +8,7 @@ Next.js **16** · React 19 · Tailwind 4 · TypeScript
 
 | Zone | Routes |
 |------|--------|
-| Marketing | `/`, `/login`, `/register`, `/verify-email` |
+| Marketing | `/`, `/login`, `/verify-email` (`/register` → notice désactivé) |
 | Dashboard | `/dashboard/*` — api-keys, webhooks, docs, payment-methods… |
 
 ## Layout

@@ -6,6 +6,8 @@ import type {
   ConnectAppProfile,
   RegisterPayload,
   WalletPhoneVerification,
+  WebhookDeliveryDetail,
+  WebhookDeliveryListPage,
   WebhookEventDoc,
 } from './types'
 import { getAccessToken, setAccessToken } from './auth-storage'
@@ -152,6 +154,23 @@ export const api = {
       token: null,
     }),
 
+  /**
+   * SSO from dt-business: exchange a user JWT for a Connect session.
+   * Must run same-origin (via proxy) so the refresh httpOnly cookie sticks on this portal.
+   */
+  loginFromUser: (userAccessToken: string, connectAppId?: string) =>
+    request<
+      AuthLoginData & {
+        requiresConnectAppChoice?: boolean
+        connectApps?: Array<{ id: string; email: string; name: string | null; status: string }>
+      }
+    >(mountPath('/auth/from-user'), {
+      method: 'POST',
+      body: JSON.stringify(connectAppId ? { connectAppId } : {}),
+      token: userAccessToken,
+      skipRefresh: true,
+    }),
+
   verifyEmail: (email: string, code: string) =>
     request<{
       status: boolean
@@ -232,6 +251,41 @@ export const api = {
       retryStrategy?: string
       verificationExample?: string
     }>(mountPath('/webhooks/events')),
+
+  listWebhookDeliveries: (params?: {
+    page?: number
+    pageSize?: number
+    event?: string
+    success?: boolean
+    responseCode?: number
+    from?: string
+    to?: string
+  }) => {
+    const q = new URLSearchParams()
+    if (params?.page) q.set('page', String(params.page))
+    if (params?.pageSize) q.set('pageSize', String(params.pageSize))
+    if (params?.event) q.set('event', params.event)
+    if (typeof params?.success === 'boolean') q.set('success', String(params.success))
+    if (typeof params?.responseCode === 'number') q.set('responseCode', String(params.responseCode))
+    if (params?.from) q.set('from', params.from)
+    if (params?.to) q.set('to', params.to)
+    const qs = q.toString()
+    return request<WebhookDeliveryListPage>(
+      mountPath(`/webhooks/deliveries${qs ? `?${qs}` : ''}`),
+    )
+  },
+
+  getWebhookDelivery: (id: string, includeSummary = false) =>
+    request<WebhookDeliveryDetail>(
+      mountPath(
+        `/webhooks/deliveries/${id}${includeSummary ? '?includeSummary=true' : ''}`,
+      ),
+    ),
+
+  retryWebhookDelivery: (id: string) =>
+    request<WebhookDeliveryDetail>(mountPath(`/webhooks/deliveries/${id}/retry`), {
+      method: 'POST',
+    }),
 
   getPaymentMethods: () =>
     request<{

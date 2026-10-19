@@ -2,15 +2,21 @@
 
 ## Storage (`lib/auth-storage.ts`)
 
-- Access token : mémoire / local
-- Refresh : **httpOnly cookie** (set by dt-api)
+- Access token : mémoire uniquement
+- Refresh : **httpOnly cookie** (set by dt-api, same-origin via proxy `/api/v3`)
 
 ## Context (`contexts/auth-context.tsx`)
 
 Bootstrap mount :
 1. Try refresh cookie first
-2. Fallback stored access token
-3. `setAuthFromVerify()` post email verification
+2. Fallback stored access token in memory (do **not** `setToken(null)` on refresh failure — races with SSO)
+3. `setAuthFromVerify()` post email verification / SSO
+
+## SSO handoff (`app/auth/sso`)
+
+Query params :
+- `userAccessToken` (+ optional `connectAppId`) — **preferred** : portal calls `POST /connect/auth/from-user` same-origin
+- `accessToken` (+ email stubs) — legacy memory-only (no refresh cookie on this origin)
 
 ## Hook
 
@@ -18,7 +24,7 @@ Bootstrap mount :
 
 ## Marketing auth pages
 
-`/login`, `/register`, `/verify-email` — phone input `react-simple-phone-input`
+`/login`, `/verify-email` — `/register` retiré (410 API + redirect notice) ; onboarding = invite DT Business DEVELOPER + SSO
 
 ## Dashboard gate
 
@@ -26,4 +32,4 @@ Bootstrap mount :
 
 ## vs ride dashboards
 
-next-auth **non utilisé** ici — auth custom JWT dt-api developers
+next-auth **non utilisé** ici — auth custom JWT Connect (dt-api)

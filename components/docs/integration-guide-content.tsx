@@ -36,7 +36,11 @@ export function IntegrationGuideContent() {
       <Section id="prerequisites" title="1. Prérequis">
         <ul className="list-disc space-y-2 pl-5">
           <li>Un compte DTMoney avec profil <strong className="text-white">Agent</strong>, <strong className="text-white">Marchand</strong> ou <strong className="text-white">Partenaire</strong>.</li>
-          <li>Un <Link href="/register" className="text-emerald-400 hover:underline">compte développeur</Link> sur cette plateforme, lié à votre numéro de téléphone DTMoney.</li>
+          <li>
+            Un compte développeur Connect créé via une invitation{' '}
+            <strong className="text-white">Développeur</strong> dans DT Business, puis SSO vers cette
+            plateforme.
+          </li>
           <li>Au moins une <Link href="/dashboard/api-keys" className="text-emerald-400 hover:underline">clé API</Link> générée depuis le dashboard.</li>
         </ul>
         <p>
@@ -59,9 +63,10 @@ export function IntegrationGuideContent() {
       <Section id="onboarding" title="3. Compte développeur">
         <ol className="list-decimal space-y-2 pl-5">
           <li>
-            <Link href="/register" className="text-emerald-400 hover:underline">Inscription</Link> avec email, mot de passe et numéro de téléphone DTMoney.
+            Invitation Développeur depuis DT Business (organisation PLATFORM) — plus d’inscription
+            self-service sur <code className="text-emerald-400">/register</code>.
           </li>
-          <li>Vérification email (code OTP).</li>
+          <li>Ouverture SSO « Connect API » depuis le mini-portail DT Business.</li>
           <li>Connexion JWT → création de clé(s) API → configuration webhooks.</li>
         </ol>
         <p>La gestion des clés et webhooks se fait via JWT (dashboard). Les appels métier utilisent <code className="text-emerald-400">{keyHeader}</code>.</p>

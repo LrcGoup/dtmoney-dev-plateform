@@ -14,7 +14,11 @@ interface AuthContextValue {
   login: (email: string, password: string) => Promise<void>
   logout: () => Promise<void>
   refreshAccount: () => Promise<void>
-  setAuthFromVerify: (accessToken: string, email: string) => void
+  setAuthFromVerify: (
+    accessToken: string,
+    email: string,
+    connectApp?: { id: string; email: string; name: string | null; status: string },
+  ) => void
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -51,12 +55,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   useEffect(() => {
+    let cancelled = false
+
     const bootstrap = async () => {
       const stored = getStoredClient()
       if (stored) setClient(stored)
 
       try {
         const refreshed = await api.refreshSession()
+        if (cancelled) return
         setAccessToken(refreshed.accessToken)
         setToken(refreshed.accessToken)
         const sessionApp = sessionAppFromAuth(refreshed)
@@ -66,14 +73,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         await refreshAccount()
       } catch {
+        // Re-read after await: SSO handoff may have set a token while refresh failed.
+        // Never call setToken(null) here — that races with /auth/sso.
+        if (cancelled) return
         const existing = getAccessToken()
-        setToken(existing)
-        if (existing) await refreshAccount()
+        if (existing) {
+          setToken(existing)
+          await refreshAccount()
+        }
       } finally {
-        setLoading(false)
+        if (!cancelled) setLoading(false)
       }
     }
     void bootstrap()
+    return () => {
+      cancelled = true
+    }
   }, [refreshAccount])
 
   const login = useCallback(
@@ -104,13 +119,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const setAuthFromVerify = useCallback(
-    (accessToken: string, email: string) => {
-      const stub = { id: '', email, name: null, status: 'active' }
+    (
+      accessToken: string,
+      email: string,
+      connectApp?: { id: string; email: string; name: string | null; status: string },
+    ) => {
+      const stub = connectApp ?? { id: '', email, name: null, status: 'active' }
       setAccessToken(accessToken)
       setToken(accessToken)
       setClient(stub)
       setClientStub(stub)
-      refreshAccount()
+      void refreshAccount()
     },
     [refreshAccount],
   )

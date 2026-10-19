@@ -20,28 +20,16 @@ export function MarketingAuthActions({ size = 'sm' }: { size?: 'sm' | 'lg' }) {
   if (size === 'lg') {
     return (
       <>
-        <Link href="/register">
-          <Button size="lg">Commencer gratuitement</Button>
-        </Link>
         <Link href="/login">
-          <Button variant="outline" size="lg">
-            Se connecter
-          </Button>
+          <Button size="lg">Se connecter</Button>
         </Link>
       </>
     )
   }
 
   return (
-    <>
-      <Link href="/login">
-        <Button variant="ghost" size="sm">
-          Connexion
-        </Button>
-      </Link>
-      <Link href="/register">
-        <Button size="sm">Créer un compte</Button>
-      </Link>
-    </>
+    <Link href="/login">
+      <Button size="sm">Connexion</Button>
+    </Link>
   )
 }

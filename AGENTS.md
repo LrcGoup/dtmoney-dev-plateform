@@ -2,9 +2,10 @@
 
 ## Ecosystem
 
-- **Index :** `D:\Projects\ride-platform-docs\INDEX.md`
-- **Fiche projet :** `D:\Projects\ride-platform-docs\projects\dt-dev-platform.md`
-- **Intégration :** `ride-platform-docs/integrations/payments-dtmoney.md`
+- **Index :** `D:\Projects\dtmoney-platform-docs\INDEX.md`
+- **Fiche projet :** `D:\Projects\dtmoney-platform-docs\projects\dt-dev-platform.md`
+- **Intégration :** `dtmoney-platform-docs/integrations/connect-payments.md`
+- **Pont Ride :** `ride-platform-docs/integrations/payments-dtmoney.md`
 
 <!-- BEGIN:nextjs-agent-rules -->
 # This is NOT the Next.js you know
@@ -15,15 +16,15 @@ This version has breaking changes — APIs, conventions, and file structure may 
 ## Stack
 
 - Next.js 16, React 19, TypeScript, Tailwind 4
-- Port prod : 4023 (`npm run start:prod`)
+- Port **4023** (dev `next dev -p 4023` + `start:prod`) — ne pas utiliser 3000 (souvent pris)
 
 ## Commands
 
 ```bash
-npm run dev
-npm run build
-npm run start:prod
-npm run lint
+bun run dev
+bun run build
+bun run start:prod
+bun run lint
 ```
 
 ## Structure

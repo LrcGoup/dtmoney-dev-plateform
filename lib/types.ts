@@ -74,6 +74,34 @@ export interface WebhookEventDoc {
   description: string
 }
 
+export type WebhookDeliveryStatus = 'delivered' | 'pending_retry' | 'failed'
+
+export interface WebhookDeliveryListItem {
+  id: string
+  event: string
+  responseCode: number | null
+  success: boolean
+  attempts: number
+  nextRetryAt: string | null
+  createdAt: string
+  updatedAt: string
+  status: WebhookDeliveryStatus
+}
+
+export interface WebhookDeliveryDetail extends WebhookDeliveryListItem {
+  summary: Record<string, unknown> | null
+  canRetry: boolean
+  retryBlockedReason: string | null
+}
+
+export interface WebhookDeliveryListPage {
+  items: WebhookDeliveryListItem[]
+  page: number
+  pageSize: number
+  total: number
+  totalPages: number
+}
+
 export interface RegisterPayload {
   email: string
   password: string
