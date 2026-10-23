@@ -21,9 +21,9 @@ export default function ApiKeysPage() {
   const keyHeader = getBusinessApiKeyHeader()
 
   const load = useCallback(async () => {
-    setError(null)
     try {
       const data = await api.listApiKeys()
+      setError(null)
       setKeys(data.apiKeys)
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Impossible de charger les clés')
@@ -33,8 +33,25 @@ export default function ApiKeysPage() {
   }, [])
 
   useEffect(() => {
-    load()
-  }, [load])
+    let cancelled = false
+    async function loadInitialKeys() {
+      try {
+        const data = await api.listApiKeys()
+        if (cancelled) return
+        setError(null)
+        setKeys(data.apiKeys)
+      } catch (err) {
+        if (cancelled) return
+        setError(err instanceof ApiError ? err.message : 'Impossible de charger les clés')
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    void loadInitialKeys()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   async function createKey() {
     setBusy('create')
