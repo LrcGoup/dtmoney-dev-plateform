@@ -38,7 +38,7 @@ sudo certbot certonly --webroot -w /var/www/letsencrypt -d developers.dt-money.c
 ### `.env` (sur le VPS, non commité)
 
 ```env
-NEXT_PUBLIC_API_URL=https://vps101055.serveur-vps.net:4016/api/v2
+NEXT_PUBLIC_API_URL=https://vps101055.serveur-vps.net:4016/api/v3
 API_PROXY_TARGET=http://127.0.0.1:4017
 ```
 

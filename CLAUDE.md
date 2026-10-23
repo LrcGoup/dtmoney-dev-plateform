@@ -32,7 +32,8 @@ Résumer en 5 lignes avant de coder.
 
 - Next.js **16** — lire `node_modules/next/dist/docs/` si incertain (voir AGENTS.md)
 - Enveloppe dt-api : `{ ok, statusCode, data }` — pas celle de ride-api
-- Documente les appels `/api/v2/dtmoney-api/...`
+- Le portail appelle et documente exclusivement Connect v3 : `/api/v3/connect/*` avec `dt-connect-key`
+- Ne pas présenter Connect v2 (`/api/v2/dtmoney-api/*`, `dt-api-key`) comme contrat utilisé par le portail
 
 ## Interdits
 

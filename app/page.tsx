@@ -15,14 +15,14 @@ export default function HomePage() {
         <div className="relative mx-auto max-w-6xl px-6 pb-24 pt-20">
           <div className="max-w-3xl">
             <p className="mb-4 text-sm font-medium uppercase tracking-wider text-emerald-400">
-              Developer Platform
+              DT Connect API · v3
             </p>
             <h1 className="text-4xl font-bold tracking-tight text-white sm:text-6xl">
-              Acceptez DTMoney dans votre produit
+              Paiements ponctuels ou abonnements, intégrés à votre produit
             </h1>
             <p className="mt-6 text-lg leading-relaxed text-slate-400">
-              API REST orientée développeurs : devis, confirmation de paiement, webhooks signés et gestion
-              self-service des clés API. Conçue pour marketplaces, e-commerce et intégrations B2B.
+              Une API REST pensée pour les intégrateurs : paiements DTMoney, plans de facturation récurrente,
+              prélèvements sur mandat, webhooks signés et gestion des clés API.
             </p>
             <div className="mt-10 flex flex-wrap gap-4">
               <MarketingAuthActions size="lg" />
@@ -31,12 +31,16 @@ export default function HomePage() {
 
           <div className="mt-16 overflow-hidden rounded-xl border border-slate-800 bg-slate-900/60 shadow-2xl">
             <pre className="overflow-x-auto p-6 text-sm leading-relaxed text-slate-300 font-[family-name:var(--font-geist-mono)]">
-              {`# Exemple checkout
+              {`# Paiement ponctuel
 POST /api/v3/${mount}/payments/quote
 POST /api/v3/${mount}/payments/confirm
 
+# Abonnement
+POST /api/v3/${mount}/billing/plans
+POST /api/v3/${mount}/billing/subscriptions
+
 Headers:
-  ${keyHeader}: sk_live_••••••••••••
+  ${keyHeader}: dt_live_••••••••••••
   Idempotency-Key: order-12345`}
             </pre>
           </div>
@@ -51,12 +55,12 @@ Headers:
               desc: 'Créez, révoquez et faites tourner vos clés depuis le dashboard. Scopes granulaires.',
             },
             {
-              title: 'Paiements sécurisés',
-              desc: 'PIN client, idempotence obligatoire, transactions atomiques et réconciliation par orderId.',
+              title: 'Paiements & abonnements',
+              desc: 'Paiements ponctuels ou prélèvements récurrents avec consentement client explicite.',
             },
             {
               title: 'Webhooks HMAC',
-              desc: 'Recevez payment.succeeded, payment.refunded et événements de dette avec signature X-DTMoney-Signature.',
+              desc: 'Suivez les paiements et échéances via des événements signés HMAC.',
             },
           ].map((f) => (
             <div key={f.title} className="rounded-xl border border-slate-800 bg-slate-900/40 p-6">
@@ -87,14 +91,20 @@ Headers:
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-sm font-semibold text-emerald-400">
                 3
               </span>
-              Au checkout : quote → collecte PIN → confirm avec idempotencyKey.
+              Pour un achat ponctuel : quote → collecte PIN → confirm idempotent.
+            </li>
+            <li className="flex gap-4">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-sm font-semibold text-emerald-400">
+                4
+              </span>
+              Pour un abonnement : créez un plan, recueillez le consentement du client et suivez les échéances.
             </li>
           </ol>
         </div>
       </section>
 
       <footer className="border-t border-slate-800 py-8 text-center text-sm text-slate-500">
-        DTMoney API © {new Date().getFullYear()}
+        DT Connect API © {new Date().getFullYear()}
       </footer>
     </div>
   )

@@ -45,7 +45,7 @@ function LoginForm() {
   return (
     <Card>
       <CardTitle>Connexion développeur</CardTitle>
-      <CardDescription>Accédez à votre dashboard DTMoney API</CardDescription>
+      <CardDescription>Accédez à votre portail DT Connect API</CardDescription>
       <form onSubmit={onSubmit} className="mt-6 space-y-4">
         {registerDisabled && (
           <Alert variant="info">

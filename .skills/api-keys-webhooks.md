@@ -11,15 +11,15 @@ Fonctions typiques :
 
 ## Webhooks
 
-Dashboard config URL + secrets — aligné dt-api dtmoney-api webhooks module
+Dashboard config URL + secrets — aligné dt-api Connect v3 webhooks module
 
 ## Auth pour gestion
 
-JWT dashboard developer — **pas** `dt-api-key` (réservé appels métier)
+JWT dashboard developer — **pas** `dt-connect-key` (réservé appels métier)
 
 ## Exemples doc
 
-Guide montre `dt-api-key: sk_live_...` pour appels serveur
+Guide montre `dt-connect-key: dt_live_...` pour appels métier Connect v3. Le portail n’utilise pas Connect v2.
 
 ## ride-api
 

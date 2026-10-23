@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/cn'
-import { getProductLabel } from '@/lib/api'
+import { ConnectBrand } from '@/components/layout/connect-brand'
 
 const links = [
   { href: '/dashboard', label: 'Vue d’ensemble', exact: true },
@@ -16,20 +16,14 @@ const links = [
 
 export function DashboardSidebar() {
   const pathname = usePathname()
-  const product = getProductLabel()
 
   return (
     <aside className="fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-slate-800 bg-slate-950">
       <div className="shrink-0 border-b border-slate-800 px-5 py-5">
         <Link href="/" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-sm font-bold text-white">
-            DT
-          </div>
-          <div>
-            <div className="text-sm font-semibold text-white">{product}</div>
-            <div className="text-xs text-slate-500">Developer Platform</div>
-          </div>
+          <ConnectBrand className="text-white" />
         </Link>
+        <p className="mt-2 pl-10 text-xs text-slate-500">Portail intégrateurs</p>
       </div>
       <nav className="flex-1 space-y-1 overflow-y-auto p-3">
         {links.map((link) => {

@@ -26,6 +26,7 @@ export const integrationGuideSections = [
   { id: 'payment-methods', title: 'Moyens de paiement' },
   { id: 'endpoints', title: 'Endpoints' },
   { id: 'refunds', title: 'Remboursements & dettes' },
+  { id: 'subscriptions', title: 'Abonnements' },
   { id: 'idempotency', title: 'Idempotence' },
   { id: 'webhooks', title: 'Webhooks' },
   { id: 'security', title: 'Sécurité & limites' },

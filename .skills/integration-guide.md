@@ -1,4 +1,4 @@
-# Integration Guide — dt-dev-platform
+# DT Connect API v3 Integration Guide — dt-dev-platform
 
 ## Composant
 
@@ -10,9 +10,10 @@
 
 ## Contenu documenté
 
-- Base URL `/api/v2/dtmoney-api/...`
-- Header `dt-api-key`
+- Base URL `/api/v3/connect/...`
+- Header `dt-connect-key`
 - Flux quote → initiate → confirm
+- Plans et abonnements récurrents
 - Idempotency keys
 - Webhooks
 - Exemples `Code` blocks avec `base` URL dynamique
@@ -23,7 +24,7 @@
 
 ## Sync
 
-Quand dt-api payments change → mettre à jour **ce composant** + hub `payments-dtmoney.md`
+Quand les contrats Connect v3 changent → mettre à jour **ce composant** + hub `connect-payments.md`
 
 ## ride-api
 

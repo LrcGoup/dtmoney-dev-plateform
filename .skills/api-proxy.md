@@ -3,7 +3,6 @@
 ## next.config.ts rewrites
 
 ```typescript
-{ source: '/api/v2/:path*', destination: `${apiOrigin}/api/v2/:path*` }
 { source: '/api/v3/:path*', destination: `${apiOrigin}/api/v3/:path*` }
 { source: '/api/docs/:path*', destination: `${apiOrigin}/api/docs/:path*` }
 ```
@@ -14,7 +13,7 @@
 
 Browser appelle **same-origin** `/api/v3` → cookies httpOnly refresh survivent F5 (login + SSO `from-user`).
 
-Connect dashboard = **v3** (`/api/v3/connect/*`). Ne pas pointer `NEXT_PUBLIC_API_URL` vers `/api/v2`.
+Le portail utilise exclusivement Connect v3 (`/api/v3/connect/*`) ; aucun rewrite Connect v2 n’est exposé.
 
 ## Server vs browser
 

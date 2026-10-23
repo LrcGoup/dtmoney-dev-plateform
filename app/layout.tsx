@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'DTMoney API — Plateforme développeurs',
-  description: 'Intégrez les paiements DTMoney dans vos applications. Clés API, webhooks, documentation.',
+  title: 'DT Connect API — Portail intégrateurs',
+  description: 'Intégrez DT Connect API v3 : paiements, abonnements, clés API et webhooks.',
 }
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

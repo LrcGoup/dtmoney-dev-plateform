@@ -97,7 +97,7 @@ export function IntegrationGuideContent() {
       </Section>
 
       <Section id="secure-checkout" title="7. Checkout sécurisé (paymentToken)">
-        <p>Le mode legacy (clientPhone + amount dans confirm) reste supporté. Le mode token limite l’exposition des données de paiement côté partenaire.</p>
+        <p>Le format direct (clientPhone + amount dans confirm) reste disponible. Le mode token limite l’exposition des données de paiement côté partenaire.</p>
         <Code>{`POST ${base}/${mount}/payments/initiate
 { "clientPhone": "242612345678", "amount": 5000, "orderId": "CMD-001" }
 
@@ -221,7 +221,66 @@ ${keyHeader}: ...`}</Code>
         </p>
       </Section>
 
-      <Section id="idempotency" title="11. Idempotence">
+      <Section id="subscriptions" title="11. Abonnements">
+        <p>
+          Les endpoints ci-dessous sont sous <code className="text-emerald-400">/api/v3/connect/billing</code> et
+          utilisent la même clé <code className="text-emerald-400">{keyHeader}</code>. Créez vos plans XAF avec une
+          périodicité <code className="text-slate-400">DAY</code>, <code className="text-slate-400">WEEK</code>,{' '}
+          <code className="text-slate-400">MONTH</code> ou <code className="text-slate-400">YEAR</code>. Le montant
+          du plan est le montant de base ; les frais de paiement habituels s’ajoutent. Prix et fréquence sont figés
+          sur chaque abonnement.
+        </p>
+        <Code>{`POST ${base}/${mount}/billing/plans
+${keyHeader}: ...
+
+{
+  "name": "Premium mensuel",
+  "description": "Accès aux fonctionnalités Premium",
+  "amount": 5000,
+  "interval": "MONTH",
+  "intervalCount": 1
+}
+
+GET ${base}/${mount}/billing/plans
+PATCH ${base}/${mount}/billing/plans/plan-uuid
+{ "isActive": false }`}</Code>
+        <p>
+          La souscription requiert le consentement explicite du client et son PIN. Le PIN authentifie le mandat, n’est
+          jamais conservé et n’est plus demandé pour les échéances automatiques. Le premier paiement est effectué à
+          la création.
+        </p>
+        <Code>{`POST ${base}/${mount}/billing/subscriptions
+${keyHeader}: ...
+
+{
+  "planId": "plan-uuid",
+  "customerPhone": "242061234567",
+  "paymentMethodType": "WALLET_PHONE",
+  "pin": "1234",
+  "acceptMandate": true,
+  "consentVersion": "merchant-terms-v1",
+  "idempotencyKey": "subscription-customer-001"
+}
+
+// Pour DT_CARD ou DT_PAY_CARD, fournir aussi :
+// "paymentMethodType": "DT_CARD", "cardToken": "card_xxx"`}</Code>
+        <p>
+          Les moyens de paiement récurrents acceptés sont Wallet DTMoney, DTCard et DTPay card tokenisée. Après
+          l’échec initial, trois relances sont faites à 24 h d’intervalle, puis l’abonnement est suspendu. La
+          résiliation prend effet à la fin de la période payée ; un abonnement sans période payée est annulé
+          immédiatement.
+        </p>
+        <p>
+          Utilisez <code className="text-emerald-400">GET /billing/subscriptions</code> pour lister les abonnements,
+          <code className="text-emerald-400"> GET /billing/subscriptions/:id</code> pour suivre les factures, et
+          <code className="text-emerald-400"> POST /billing/subscriptions/:id/cancel</code> pour résilier.
+          Webhooks disponibles : <code className="text-slate-400">subscription.payment_succeeded</code>,{' '}
+          <code className="text-slate-400">subscription.payment_failed</code> et{' '}
+          <code className="text-slate-400">subscription.canceled</code>.
+        </p>
+      </Section>
+
+      <Section id="idempotency" title="12. Idempotence">
         <p>
           Pour éviter un double encaissement (double clic, timeout, retry), envoyez une clé unique par paiement via{' '}
           <code className="text-emerald-400">idempotencyKey</code> ou l’en-tête <code className="text-emerald-400">Idempotency-Key</code>.
@@ -230,7 +289,7 @@ ${keyHeader}: ...`}</Code>
         <p>Utilisez aussi <code className="text-slate-400">orderId</code> pour la traçabilité et la réconciliation.</p>
       </Section>
 
-      <Section id="webhooks" title="12. Webhooks">
+      <Section id="webhooks" title="13. Webhooks">
         <p>
           Configurez l’URL et le secret depuis le{' '}
           <Link href="/dashboard/webhooks" className="text-emerald-400 hover:underline">dashboard webhooks</Link>{' '}
@@ -238,7 +297,10 @@ ${keyHeader}: ...`}</Code>
           <code className="text-emerald-400">deposit.succeeded</code>,{' '}
           <code className="text-emerald-400">payment.refunded</code>,{' '}
           <code className="text-emerald-400">refund.debt.created</code>,{' '}
-          <code className="text-emerald-400">refund.debt.recovered</code>.
+          <code className="text-emerald-400">refund.debt.recovered</code>,{' '}
+          <code className="text-emerald-400">subscription.payment_succeeded</code>,{' '}
+          <code className="text-emerald-400">subscription.payment_failed</code> et{' '}
+          <code className="text-emerald-400">subscription.canceled</code>.
         </p>
         <p>En-têtes : <code className="text-slate-400">X-DTMoney-Event</code>, <code className="text-slate-400">X-DTMoney-Signature: sha256=&lt;hmac&gt;</code>.</p>
         <Code>{`{
@@ -255,20 +317,20 @@ ${keyHeader}: ...`}</Code>
         <p>Vérifiez HMAC-SHA256 sur le body brut. Retries persistants (5 tentatives, backoff). Répondez 2xx sous 15s. En-tête <code className="text-slate-400">X-DTMoney-Delivery-Id</code> pour l’audit.</p>
       </Section>
 
-      <Section id="security" title="13. Sécurité & limites">
+      <Section id="security" title="14. Sécurité & limites">
         <ul className="list-disc space-y-2 pl-5">
-          <li>Clés API hashées — format <code className="text-emerald-400">dt_live_*</code> / <code className="text-emerald-400">dt_test_*</code>, affichées une seule fois.</li>
+          <li>Clés Connect hashées — format <code className="text-emerald-400">dt_live_*</code> / <code className="text-emerald-400">dt_test_*</code>, affichées une seule fois.</li>
           <li>Scopes granulaires : <code className="text-slate-400">payments:read</code>, <code className="text-slate-400">payments:write</code>, etc.</li>
           <li>Rate limiting : 100 req/min (TEST), 1000 req/min (LIVE) → HTTP 429.</li>
-          <li>Ne jamais stocker le PIN client — transiter uniquement lors du confirm.</li>
+          <li>Ne jamais stocker le PIN client — le transmettre uniquement au confirm ou à la création du mandat.</li>
           <li>Ledger double-écriture côté serveur pour audit et réconciliation.</li>
         </ul>
       </Section>
 
-      <Section id="best-practices" title="14. Bonnes pratiques">
+      <Section id="best-practices" title="15. Bonnes pratiques">
         <ul className="list-disc space-y-2 pl-5">
           <li>HTTPS uniquement en production.</li>
-          <li>PIN : ne jamais stocker, transiter uniquement lors du confirm.</li>
+          <li>PIN : ne jamais stocker, transiter uniquement lors du confirm ou de la création du mandat d’abonnement.</li>
           <li>Idempotence obligatoire sur chaque paiement.</li>
           <li>Parser <code className="text-slate-400">error.message</code> pour l’UX.</li>
           <li>Webhooks idempotents côté réception (<code className="text-slate-400">operationId</code>).</li>

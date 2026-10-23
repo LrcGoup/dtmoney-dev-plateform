@@ -1,11 +1,11 @@
-# DTMoney API — Developer Portal
+# DT Connect API — Developer Portal
 
-Plateforme développeurs Next.js pour gérer les comptes DTMoney API (clés API, webhooks, documentation).
+Portail intégrateurs Next.js pour Connect v3 : clés API, webhooks, paiements ponctuels et abonnements.
 
 ## Prérequis
 
 - [Bun](https://bun.sh) ou Node.js 20+
-- API backend v2 en cours d’exécution (`cd v2 && bun run start:dev`)
+- API dt-api en cours d’exécution (Connect v3, `/api/v3/connect/*`)
 
 ## Configuration
 
@@ -15,7 +15,7 @@ cp .env.local.example .env.local
 
 Variables (voir `.env.local.example`) :
 
-- `NEXT_PUBLIC_API_URL=/api/v2` — appels API via proxy Next (same-origin, cookie refresh au F5)
+- `NEXT_PUBLIC_API_URL=/api/v3` — appels API via proxy Next (same-origin, cookie refresh au F5)
 - `API_PROXY_TARGET=http://localhost:4017` — backend NestJS local
 - `NEXT_PUBLIC_API_ORIGIN` — URL publique affichée (Swagger, doc intégration)
 
@@ -28,7 +28,7 @@ bun install
 bun run dev
 ```
 
-Ouvrir [http://localhost:3000](http://localhost:3000).
+Ouvrir [http://localhost:4023](http://localhost:4023).
 
 ## Pages
 
@@ -49,5 +49,5 @@ Ouvrir [http://localhost:3000](http://localhost:3000).
 - Next.js 16 (App Router)
 - React 19
 - Tailwind CSS 4
-- Auth JWT (access token en mémoire + refresh httpOnly cookie) → `/api/v2/dtmoney-api/*`
+- Auth JWT (access token en mémoire + refresh httpOnly cookie) → `/api/v3/connect/*`
 # dtmoney-dev-plateform

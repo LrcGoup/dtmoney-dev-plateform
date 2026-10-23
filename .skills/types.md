@@ -15,4 +15,4 @@ Typer nouvelles méthodes `api.*` ici avant usage pages
 
 ## dt-api source of truth
 
-Swagger `/api/docs/dtmoney-api` — valider types si drift
+Swagger Connect v3 `/api/docs/connect` — valider les contrats si drift

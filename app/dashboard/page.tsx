@@ -15,7 +15,7 @@ export default function DashboardPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardTitle>Compte développeur</CardTitle>
-          <CardDescription>Informations de votre intégration DTMoney API</CardDescription>
+          <CardDescription>Informations de votre intégration DT Connect API</CardDescription>
           {account ? (
             <dl className="mt-6 space-y-3 text-sm">
               <div className="flex justify-between gap-4">

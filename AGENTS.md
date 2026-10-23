@@ -36,11 +36,13 @@ components/docs/                  # integration-guide-content.tsx
 
 ## Rôle
 
-Portail **documentation développeurs DTMoney** — exemples API, `dt-api-key`, flux quote/initiate/confirm.
+Portail **DT Connect API v3** — documentation développeurs, gestion des clés `dt-connect-key`, paiements, abonnements et webhooks.
 
 ## API / Intégrations
 
-- Documente les appels vers **dt-api** (`/api/v2/dtmoney-api/...`)
+- Les appels métier du portail ciblent exclusivement **dt-api Connect v3** (`/api/v3/connect/...`).
+- Auth métier : `dt-connect-key`. Le JWT de dashboard sert uniquement à la gestion du compte, des clés et des webhooks.
+- Connect v2 (`/api/v2/dtmoney-api/...`) n’est pas utilisé par le portail.
 - ride-api consomme la même API en server-to-server — voir hub payments
 
 ## Do not
