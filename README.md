@@ -34,7 +34,7 @@ Ouvrir [http://localhost:4023](http://localhost:4023).
 
 | Route | Description |
 |-------|-------------|
-| `/` | Redirection vers la connexion |
+| `/` | Redirection vers DT Business |
 | `/auth/sso` | Accès SSO depuis DT Business |
 | `/dashboard` | Vue d’ensemble compte |
 | `/dashboard/api-keys` | CRUD clés API |

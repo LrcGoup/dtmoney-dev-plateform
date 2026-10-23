@@ -13,6 +13,7 @@ import type { ApiKeyCreated, ApiKeyItem } from '@/lib/types'
 export default function ApiKeysPage() {
   const [keys, setKeys] = useState<ApiKeyItem[]>([])
   const [newKeyName, setNewKeyName] = useState('')
+  const [newKeyEnvironment, setNewKeyEnvironment] = useState<'TEST' | 'LIVE'>('LIVE')
   const [revealedKey, setRevealedKey] = useState<ApiKeyCreated | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -39,9 +40,10 @@ export default function ApiKeysPage() {
     setBusy('create')
     setError(null)
     try {
-      const data = await api.createApiKey(newKeyName.trim() || undefined)
+      const data = await api.createApiKey(newKeyName.trim() || undefined, undefined, newKeyEnvironment)
       setRevealedKey(data.apiKey)
       setNewKeyName('')
+      setNewKeyEnvironment('LIVE')
       await load()
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Création impossible')
@@ -105,6 +107,18 @@ export default function ApiKeysPage() {
               onChange={(e) => setNewKeyName(e.target.value)}
             />
           </div>
+          <div className="sm:w-48">
+            <Label htmlFor="keyEnvironment">Environnement</Label>
+            <select
+              id="keyEnvironment"
+              className="w-full rounded-lg border border-slate-700 bg-slate-900/80 px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-emerald-500/70"
+              value={newKeyEnvironment}
+              onChange={(event) => setNewKeyEnvironment(event.target.value as 'TEST' | 'LIVE')}
+            >
+              <option value="TEST">TEST — sandbox</option>
+              <option value="LIVE">LIVE — réel</option>
+            </select>
+          </div>
           <Button onClick={createKey} disabled={busy === 'create'}>
             {busy === 'create' ? 'Création…' : 'Générer une clé'}
           </Button>
@@ -124,6 +138,7 @@ export default function ApiKeysPage() {
                 <tr className="border-b border-slate-800">
                   <th className="pb-3 pr-4 font-medium">Nom</th>
                   <th className="pb-3 pr-4 font-medium">Aperçu</th>
+                  <th className="pb-3 pr-4 font-medium">Environnement</th>
                   <th className="pb-3 pr-4 font-medium">Scopes</th>
                   <th className="pb-3 pr-4 font-medium">Statut</th>
                   <th className="pb-3 font-medium">Actions</th>
@@ -134,6 +149,9 @@ export default function ApiKeysPage() {
                   <tr key={k.id} className="border-b border-slate-800/60">
                     <td className="py-3 pr-4 text-slate-200">{k.name ?? '—'}</td>
                     <td className="py-3 pr-4 font-mono text-xs text-slate-400">{k.keyPrefix ?? k.keyPreview ?? '—'}</td>
+                    <td className="py-3 pr-4">
+                      <Badge tone={k.environment === 'TEST' ? 'warning' : 'success'}>{k.environment}</Badge>
+                    </td>
                     <td className="py-3 pr-4">
                       <div className="flex flex-wrap gap-1">
                         {k.scopes.slice(0, 2).map((s) => (

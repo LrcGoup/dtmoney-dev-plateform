@@ -41,11 +41,15 @@ export function IntegrationGuideContent() {
             <strong className="text-white">Développeur</strong> dans DT Business, puis SSO vers cette
             plateforme.
           </li>
+          <li>Un compte Connect actif et vérifié, associé à votre utilisateur DTMoney.</li>
           <li>Au moins une <Link href="/dashboard/api-keys" className="text-emerald-400 hover:underline">clé API</Link> générée depuis le dashboard.</li>
         </ul>
         <p>
-          Les clés API sont créées en self-service (plusieurs clés possibles, rotation et révocation). Ne les commitez
-          jamais — utilisez des variables d’environnement ou un secret manager.
+          Créez une clé depuis le dashboard ; sa valeur complète n’est affichée qu’une fois. La création actuelle
+          permet de choisir <code className="text-emerald-400">TEST</code> ou <code className="text-emerald-400">LIVE</code>.
+          Les clés TEST utilisent des fixtures et un stockage sandbox séparé ; elles ne peuvent pas débiter ou créditer
+          de vrais comptes. Les clés LIVE exécutent de vraies opérations. Ne commitez aucune clé ; stockez-la côté
+          serveur dans un gestionnaire de secrets.
         </p>
       </Section>
 
@@ -66,7 +70,7 @@ export function IntegrationGuideContent() {
             Recevez une invitation Développeur depuis DT Business (organisation PLATFORM).
           </li>
           <li>Ouverture SSO « Connect API » depuis le mini-portail DT Business.</li>
-          <li>Connexion JWT → création de clé(s) API → configuration webhooks.</li>
+          <li>Depuis le portail, créez une clé API et configurez vos webhooks.</li>
         </ol>
         <p>La gestion des clés et webhooks se fait via JWT (dashboard). Les appels métier utilisent <code className="text-emerald-400">{keyHeader}</code>.</p>
       </Section>
@@ -75,6 +79,13 @@ export function IntegrationGuideContent() {
         <p>Chaque requête métier inclut :</p>
         <Code>{`${keyHeader}: votre_cle_api_secrete`}</Code>
         <p>En cas d’absence ou de clé invalide : <strong className="text-white">401</strong> avec <code className="text-slate-400">error.message</code>.</p>
+        <p>Scopes nécessaires selon les opérations :</p>
+        <ul className="list-disc space-y-1 pl-5">
+          <li><code className="text-slate-400">payments:read</code> : devis et consultation de paiements.</li>
+          <li><code className="text-slate-400">payments:write</code> : initiation/confirmation, remboursements, abonnements et settlements.</li>
+          <li><code className="text-slate-400">customers:read</code> : soldes et résolution de carte en token.</li>
+          <li><code className="text-slate-400">deposits:write</code> : dépôt cash agent ; ce scope n’est pas inclus dans les scopes par défaut d’une clé.</li>
+        </ul>
       </Section>
 
       <Section id="responses" title="5. Format des réponses">
@@ -86,32 +97,48 @@ export function IntegrationGuideContent() {
 
       <Section id="checkout" title="6. Flux checkout recommandé">
         <ol className="list-decimal space-y-2 pl-5">
-          <li>L’utilisateur choisit « Payer avec DTMoney » et saisit son téléphone.</li>
-          <li><strong className="text-white">Quote</strong> — vérifier solde + frais.</li>
-          <li><strong className="text-white">Initiate</strong> (recommandé) — obtenir un <code className="text-emerald-400">paymentToken</code> éphémère.</li>
-          <li>Afficher le total TTC et collecter le <strong className="text-white">PIN</strong> client.</li>
-          <li><strong className="text-white">Confirm</strong> — débit avec <code className="text-emerald-400">idempotencyKey</code> obligatoire.</li>
-          <li>En cas de timeout : <strong className="text-white">GET by-order/:orderId</strong>.</li>
+          <li>Depuis votre backend, appelez <code className="text-emerald-400">POST /payments/quote</code> pour afficher montant, frais et total. Ce devis ne réserve pas le solde.</li>
+          <li>Appelez <code className="text-emerald-400">POST /payments/initiate</code> avec le téléphone et le montant ; la session expire après 5 minutes.</li>
+          <li>Affichez le total retourné et recueillez le PIN du client dans un parcours sécurisé. Ne le journalisez ni ne le stockez.</li>
+          <li>Appelez <code className="text-emerald-400">POST /payments/confirm</code> avec le <code className="text-emerald-400">paymentToken</code>, le PIN et une clé d’idempotence stable pour la commande.</li>
+          <li>N’exécutez la commande qu’après confirmation du succès. En cas de timeout, rejouez la même confirmation avec la même clé ; vérifiez ensuite <code className="text-emerald-400">GET /payments/by-order/:orderId</code>.</li>
         </ol>
+        <p>Les appels avec la clé API doivent venir de votre serveur, jamais directement de l’application ou du navigateur client.</p>
       </Section>
 
       <Section id="secure-checkout" title="7. Checkout sécurisé (paymentToken)">
-        <p>Le format direct (clientPhone + amount dans confirm) reste disponible. Le mode token limite l’exposition des données de paiement côté partenaire.</p>
-        <Code>{`POST ${base}payments/initiate
-{ "clientPhone": "242612345678", "amount": 5000, "orderId": "CMD-001" }
+        <p>Exemple cURL en trois appels. Définissez <code className="text-emerald-400">CONNECT_KEY</code>, <code className="text-emerald-400">CUSTOMER_PHONE</code> et <code className="text-emerald-400">CUSTOMER_PIN</code> dans votre environnement serveur ; transmettez le PIN uniquement après le consentement du client.</p>
+        <Code>{`# CONNECT_KEY, CUSTOMER_PHONE et CUSTOMER_PIN sont définis côté serveur.
+CONNECT_BASE='${base}'
 
-→ { "paymentId": "...", "paymentToken": "...", "supportedMethods": ["WALLET_PHONE","DT_CARD"], "expiresIn": 300 }
+# 1. Devis (montant du service en XAF)
+curl -sS -X POST "\${CONNECT_BASE}payments/quote" \\
+  -H "${keyHeader}: \${CONNECT_KEY}" -H 'Content-Type: application/json' \\
+  --data-raw "{\\"clientPhone\\":\\"\${CUSTOMER_PHONE}\\",\\"amount\\":5000}"
 
-POST ${base}payments/confirm
-{
-  "paymentToken": "pt_...",
-  "pin": "1234",
-  "idempotencyKey": "CMD-001-unique"
-}`}</Code>
+# 2. Créer une session de paiement (paymentToken valable 300 secondes)
+curl -sS -X POST "\${CONNECT_BASE}payments/initiate" \\
+  -H "${keyHeader}: \${CONNECT_KEY}" -H 'Content-Type: application/json' \\
+  --data-raw "{\\"clientPhone\\":\\"\${CUSTOMER_PHONE}\\",\\"amount\\":5000,\\"orderId\\":\\"ORDER-123\\"}"
+
+# 3. Copier le paymentToken renvoyé à l’étape 2 ; l’idempotencyKey doit rester
+# identique si vous devez rejouer cette confirmation après un timeout.
+curl -sS -X POST "\${CONNECT_BASE}payments/confirm" \\
+  -H "${keyHeader}: \${CONNECT_KEY}" -H 'Content-Type: application/json' \\
+  -H 'Idempotency-Key: ORDER-123-payment' \\
+  --data-raw "{\\"paymentToken\\":\\"<PAYMENT_TOKEN>\\",\\"pin\\":\\"\${CUSTOMER_PIN}\\",\\"idempotencyKey\\":\\"ORDER-123-payment\\"}"`}</Code>
+        <p>
+          La réponse d’<code className="text-slate-400">initiate</code> contient notamment <code className="text-slate-400">paymentId</code>,{' '}
+          <code className="text-slate-400">paymentToken</code>, <code className="text-slate-400">supportedMethods</code> et{' '}
+          <code className="text-slate-400">expiresIn</code>. Les moyens proposés sont ceux activés pour votre compte ; le token fixe le montant et le moyen de paiement de cette session.
+        </p>
       </Section>
 
       <Section id="payment-methods" title="8. Moyens de paiement (orchestration)">
-        <p>Tous les paiements utilisent <code className="text-emerald-400">POST /payments/confirm</code> avec un objet <code className="text-emerald-400">paymentMethod</code>.</p>
+        <p>
+          La confirmation accepte le format orchestré <code className="text-emerald-400">paymentMethod</code> ; le
+          format historique wallet avec <code className="text-emerald-400">clientPhone</code> reste disponible.
+        </p>
         <Code>{`// Wallet orchestré
 {
   "paymentMethod": { "type": "WALLET_PHONE", "phone": "242061234567" },
@@ -136,6 +163,21 @@ POST ${base}payments/confirm
   "idempotencyKey": "CMD-003"
 }`}</Code>
         <p>Configurez les moyens activés depuis le dashboard → <strong className="text-white">Moyens de paiement</strong>.</p>
+        <p>
+          Pour obtenir un token carte, votre backend peut appeler <code className="text-emerald-400">POST /instruments/resolve-card</code>{' '}
+          avec <code className="text-slate-400">cardNumber</code> (16–19 chiffres) et le PIN du titulaire. L’API retourne un token d’instrument
+          utilisable comme <code className="text-slate-400">cardToken</code> ; ne conservez ni le numéro complet ni le PIN.
+          Pour un abonnement carte, transmettez ce token avec le type <code className="text-slate-400">DT_CARD</code> ou{' '}
+          <code className="text-slate-400">DT_PAY_CARD</code>.
+        </p>
+        <Code>{`POST ${base}instruments/resolve-card
+${keyHeader}: ...
+Content-Type: application/json
+
+{ "cardNumber": "1234567890123456", "pin": "1234" }
+
+→ Utiliser le cardToken retourné dans paymentMethod.cardToken
+  (paiement) ou cardToken (abonnement).`}</Code>
       </Section>
 
       <Section id="endpoints" title="9. Endpoints">
@@ -144,7 +186,11 @@ POST ${base}payments/confirm
 ${keyHeader}: ...
 
 { "clientPhone": "242612345678", "amount": 5000 }`}</Code>
-        <p>Retourne <code className="text-slate-400">balance</code>, <code className="text-slate-400">fees</code>, <code className="text-slate-400">totalAmount</code>, <code className="text-slate-400">accountBalance</code>.</p>
+        <p>
+          Retourne <code className="text-slate-400">balance</code> (booléen indiquant si les fonds sont suffisants),{' '}
+          <code className="text-slate-400">fees</code>, <code className="text-slate-400">totalAmount</code> et{' '}
+          <code className="text-slate-400">accountBalance</code> (solde numérique). Le devis n’est pas une réservation.
+        </p>
 
         <h3 className="mt-6 font-medium text-white">POST /payments/initiate</h3>
         <Code>{`POST ${base}payments/initiate
@@ -168,6 +214,26 @@ Idempotency-Key: CMD-2024-001-unique
         <h3 className="mt-6 font-medium text-white">GET /payments/by-order/:orderId</h3>
         <Code>{`GET ${base}payments/by-order/CMD-2024-001
 ${keyHeader}: ...`}</Code>
+
+        <h3 className="mt-6 font-medium text-white">POST /payments/settlements/disburse (marketplace)</h3>
+        <p>
+          Créditer une ou plusieurs organisations ou personnes après votre propre calcul de répartition. Chaque ligne
+          doit cibler exactement un <code className="text-slate-400">organizationId</code> ou un{' '}
+          <code className="text-slate-400">beneficiaryUserId</code>. Cette opération ne remplace pas votre logique de commande.
+        </p>
+        <Code>{`POST ${base}payments/settlements/disburse
+${keyHeader}: ...
+Idempotency-Key: ORDER-123-settlement
+
+{
+  "aggregateType": "order",
+  "aggregateId": "ORDER-123",
+  "idempotencyKey": "ORDER-123-settlement",
+  "lines": [
+    { "organizationId": "organization-uuid", "amount": 4500, "role": "MERCHANT" },
+    { "beneficiaryUserId": "user-uuid", "amount": 500, "role": "PLATFORM_FEE" }
+  ]
+}`}</Code>
 
         <h3 className="mt-6 font-medium text-white">GET /customers/:phone/balance</h3>
         <Code>{`GET ${base}customers/242612345678/balance?amount=5000
@@ -251,7 +317,9 @@ GET ${base}billing/plans
 PATCH ${base}billing/plans/plan-uuid
 { "isActive": false }`}</Code>
         <p>
-          La souscription requiert le consentement explicite du client et son PIN. Le PIN authentifie le mandat, n’est
+          La souscription requiert le consentement explicite du client et son PIN. Pour une souscription par carte,
+          résolvez d’abord la carte avec <code className="text-slate-400">POST /instruments/resolve-card</code> et
+          transmettez le <code className="text-slate-400">cardToken</code> obtenu. Le PIN authentifie le mandat, n’est
           jamais conservé et n’est plus demandé pour les échéances automatiques. Le premier paiement est effectué à
           la création.
         </p>
@@ -277,7 +345,7 @@ ${keyHeader}: ...
           immédiatement.
         </p>
         <p>
-          Pour voir la liste, utilisez <code className="text-emerald-400">GET /billing/subscriptions?page=1&amp;pageSize=20&amp;status=ACTIVE</code>.
+          Pour voir la liste, utilisez <code className="text-emerald-400">GET /billing/subscriptions?page=1&amp;pageSize=20&amp;status=ACTIVE</code> ; les plans se filtrent avec <code className="text-emerald-400">GET /billing/plans?activeOnly=true</code>.
           Les statuts filtrables sont <code className="text-slate-400">PENDING</code>, <code className="text-slate-400">ACTIVE</code>,{' '}
           <code className="text-slate-400">PAST_DUE</code>, <code className="text-slate-400">SUSPENDED</code> et{' '}
           <code className="text-slate-400">CANCELED</code>.
@@ -296,7 +364,8 @@ ${keyHeader}: ...
         <p>
           Pour éviter un double encaissement (double clic, timeout, retry), envoyez une clé unique par paiement via{' '}
           <code className="text-emerald-400">idempotencyKey</code> ou l’en-tête <code className="text-emerald-400">Idempotency-Key</code>.
-          Une requête identique retourne le même succès sans second débit.
+          Réutilisez la même clé uniquement pour rejouer la même opération ; chaque nouvelle opération doit avoir une
+          nouvelle clé. Une requête reconnue retourne le résultat existant sans second débit.
         </p>
         <p>
           À la création d’un abonnement, la clé protège la souscription et sa première échéance ; chaque renouvellement
@@ -318,7 +387,11 @@ ${keyHeader}: ...
           <code className="text-emerald-400">subscription.payment_failed</code> et{' '}
           <code className="text-emerald-400">subscription.canceled</code>.
         </p>
-        <p>En-têtes : <code className="text-slate-400">X-DTMoney-Event</code>, <code className="text-slate-400">X-DTMoney-Signature: sha256=&lt;hmac&gt;</code>.</p>
+        <p>
+          En-têtes : <code className="text-slate-400">X-DTMoney-Event</code>,{' '}
+          <code className="text-slate-400">X-DTMoney-Delivery-Id</code> et, si un secret webhook est configuré,{' '}
+          <code className="text-slate-400">X-DTMoney-Signature: sha256=&lt;hmac_hex&gt;</code>.
+        </p>
         <Code>{`{
   "event": "payment.succeeded",
   "operationId": "uuid",
@@ -330,14 +403,41 @@ ${keyHeader}: ...
   "idempotencyKey": "CMD-2024-001-unique",
   "paymentMethodType": "WALLET_PHONE"
 }`}</Code>
-        <p>Vérifiez HMAC-SHA256 sur le body brut. Retries persistants (5 tentatives, backoff). Répondez 2xx sous 15s. En-tête <code className="text-slate-400">X-DTMoney-Delivery-Id</code> pour l’audit.</p>
+        <Code>{`import { createHmac, timingSafeEqual } from 'node:crypto'
+
+// rawBody doit être le Buffer exact reçu par HTTP.
+const expected = 'sha256=' + createHmac('sha256', WEBHOOK_SECRET)
+  .update(rawBody)
+  .digest('hex')
+const received = request.headers['x-dtmoney-signature'] ?? ''
+const expectedBytes = Buffer.from(expected)
+const receivedBytes = Buffer.from(received)
+const valid = expectedBytes.length === receivedBytes.length
+  && timingSafeEqual(expectedBytes, receivedBytes)
+if (!valid) return response.status(401).end()`}</Code>
+        <p>
+          Vérifiez HMAC-SHA256 sur les octets exacts du body reçu, avant de le parser ; comparez les signatures en
+          temps constant. Répondez 2xx rapidement (timeout côté émetteur : 15 s). Jusqu’à 5 tentatives au total sont
+          effectuées ; le worker de retry vérifie les livraisons chaque minute. Les doublons sont possibles :
+          dédupliquez avec <code className="text-slate-400">X-DTMoney-Delivery-Id</code> ou{' '}
+          <code className="text-slate-400">operationId</code> selon l’effet métier.
+        </p>
       </Section>
 
       <Section id="security" title="14. Sécurité & limites">
+        <p>
+          La sandbox est isolée des wallets, opérations, remboursements et ledger de production. Pour tester un wallet,
+          utilisez <code className="text-emerald-400">242000000001</code> (solde fictif suffisant) ou{' '}
+          <code className="text-emerald-400">242000000002</code> (solde insuffisant) et le PIN fictif{' '}
+          <code className="text-emerald-400">1234</code>. Tout autre numéro est refusé sans recherche dans les comptes
+          réels. Les clés TEST sont limitées aux paiements wallet, devis, dépôts et remboursements simulés. Cartes,
+          settlements, abonnements et opérations provider restent indisponibles en TEST ; ces routes répondent 403 au
+          lieu d’exécuter une opération réelle. Les webhooks externes ne sont pas envoyés pour les opérations TEST.
+        </p>
         <ul className="list-disc space-y-2 pl-5">
           <li>Clés Connect hashées — format <code className="text-emerald-400">dt_live_*</code> / <code className="text-emerald-400">dt_test_*</code>, affichées une seule fois.</li>
           <li>Scopes granulaires : <code className="text-slate-400">payments:read</code>, <code className="text-slate-400">payments:write</code>, etc.</li>
-          <li>Rate limiting : 100 req/min (TEST), 1000 req/min (LIVE) → HTTP 429.</li>
+          <li>Limitation actuelle : 100 requêtes/minute par clé TEST et 1000 par clé LIVE ; au-delà, l’API répond HTTP 429.</li>
           <li>Ne jamais stocker le PIN client — le transmettre uniquement au confirm ou à la création du mandat.</li>
           <li>Ledger double-écriture côté serveur pour audit et réconciliation.</li>
         </ul>

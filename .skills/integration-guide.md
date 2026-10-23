@@ -10,13 +10,15 @@
 
 ## Contenu documenté
 
-- Base URL `/api/v3/connect/...`
+- Public integration base URL `/api/v3/connect/` (trailing slash)
 - Header `dt-connect-key`
 - Flux quote → initiate → confirm
 - Plans et abonnements récurrents
 - Idempotency keys
 - Webhooks
 - Exemples `Code` blocks avec `base` URL dynamique
+- PaymentToken cURL quickstart, settlement, card tokenization, and SSO-only onboarding
+- Explicit warning: `dt_test_*` keys are not a sandbox and do not isolate transactions
 
 ## Page
 

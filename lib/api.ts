@@ -293,6 +293,6 @@ export function getSwaggerUrl() {
     const apiOrigin = (process.env.NEXT_PUBLIC_API_ORIGIN ?? 'http://localhost:4017').replace(/\/$/, '')
     return `${apiOrigin}/api/docs/connect`
   }
-  const root = configured.replace(/\/api\/v[23]\/?$/, '')
+  const root = configured.replace(/\/api\/v[23](?:\/connect)?\/?$/, '')
   return `${root}/api/docs/connect`
 }
