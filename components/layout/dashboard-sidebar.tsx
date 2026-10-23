@@ -23,7 +23,6 @@ export function DashboardSidebar() {
         <Link href="/" className="flex items-center gap-2">
           <ConnectBrand className="text-white" />
         </Link>
-        <p className="mt-2 pl-10 text-xs text-slate-500">Portail intégrateurs</p>
       </div>
       <nav className="flex-1 space-y-1 overflow-y-auto p-3">
         {links.map((link) => {

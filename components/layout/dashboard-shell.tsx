@@ -1,6 +1,5 @@
 'use client'
 
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import { DashboardSidebar } from '@/components/layout/dashboard-sidebar'
@@ -12,7 +11,7 @@ export function DashboardShell({ children, title }: { children: React.ReactNode;
   const router = useRouter()
 
   useEffect(() => {
-    if (!loading && !token) router.replace('/login')
+    if (!loading && !token) router.replace('/auth/sso')
   }, [loading, token, router])
 
   if (loading) {
@@ -38,11 +37,6 @@ export function DashboardShell({ children, title }: { children: React.ReactNode;
           <Button variant="ghost" size="sm" onClick={() => logout()}>
             Déconnexion
           </Button>
-          <Link href="/">
-            <Button variant="outline" size="sm">
-              Site
-            </Button>
-          </Link>
         </div>
         </div>
       </header>

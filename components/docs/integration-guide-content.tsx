@@ -19,7 +19,7 @@ function Section({ id, title, children }: { id: string; title: string; children:
 }
 
 export function IntegrationGuideContent() {
-  const { base, swagger, mount, keyHeader, product } = getIntegrationGuideMeta()
+  const { base, swagger, keyHeader, product } = getIntegrationGuideMeta()
 
   return (
     <article className="space-y-10">
@@ -51,7 +51,7 @@ export function IntegrationGuideContent() {
 
       <Section id="base-url" title="2. Base URL">
         <p>Toutes les routes métier sont sous :</p>
-        <Code>{`${base}/${mount}/...`}</Code>
+        <Code>{`${base}...`}</Code>
         <p>
           Référence interactive OpenAPI :{' '}
           <a href={swagger} target="_blank" rel="noreferrer" className="text-emerald-400 hover:underline">
@@ -97,12 +97,12 @@ export function IntegrationGuideContent() {
 
       <Section id="secure-checkout" title="7. Checkout sécurisé (paymentToken)">
         <p>Le format direct (clientPhone + amount dans confirm) reste disponible. Le mode token limite l’exposition des données de paiement côté partenaire.</p>
-        <Code>{`POST ${base}/${mount}/payments/initiate
+        <Code>{`POST ${base}payments/initiate
 { "clientPhone": "242612345678", "amount": 5000, "orderId": "CMD-001" }
 
 → { "paymentId": "...", "paymentToken": "...", "supportedMethods": ["WALLET_PHONE","DT_CARD"], "expiresIn": 300 }
 
-POST ${base}/${mount}/payments/confirm
+POST ${base}payments/confirm
 {
   "paymentToken": "pt_...",
   "pin": "1234",
@@ -140,18 +140,18 @@ POST ${base}/${mount}/payments/confirm
 
       <Section id="endpoints" title="9. Endpoints">
         <h3 className="font-medium text-white">POST /payments/quote</h3>
-        <Code>{`POST ${base}/${mount}/payments/quote
+        <Code>{`POST ${base}payments/quote
 ${keyHeader}: ...
 
 { "clientPhone": "242612345678", "amount": 5000 }`}</Code>
         <p>Retourne <code className="text-slate-400">balance</code>, <code className="text-slate-400">fees</code>, <code className="text-slate-400">totalAmount</code>, <code className="text-slate-400">accountBalance</code>.</p>
 
         <h3 className="mt-6 font-medium text-white">POST /payments/initiate</h3>
-        <Code>{`POST ${base}/${mount}/payments/initiate
+        <Code>{`POST ${base}payments/initiate
 { "clientPhone": "242612345678", "amount": 5000 }`}</Code>
 
         <h3 className="mt-6 font-medium text-white">POST /payments/confirm</h3>
-        <Code>{`POST ${base}/${mount}/payments/confirm
+        <Code>{`POST ${base}payments/confirm
 Content-Type: application/json
 ${keyHeader}: ...
 Idempotency-Key: CMD-2024-001-unique
@@ -166,16 +166,16 @@ Idempotency-Key: CMD-2024-001-unique
         <p><code className="text-emerald-400">idempotencyKey</code> est <strong className="text-white">obligatoire</strong> (body ou en-tête <code className="text-slate-400">Idempotency-Key</code>).</p>
 
         <h3 className="mt-6 font-medium text-white">GET /payments/by-order/:orderId</h3>
-        <Code>{`GET ${base}/${mount}/payments/by-order/CMD-2024-001
+        <Code>{`GET ${base}payments/by-order/CMD-2024-001
 ${keyHeader}: ...`}</Code>
 
         <h3 className="mt-6 font-medium text-white">GET /customers/:phone/balance</h3>
-        <Code>{`GET ${base}/${mount}/customers/242612345678/balance?amount=5000
+        <Code>{`GET ${base}customers/242612345678/balance?amount=5000
 ${keyHeader}: ...`}</Code>
 
         <h3 className="mt-6 font-medium text-white">POST /payments/deposit (Agents uniquement)</h3>
         <p>Dépôt cash en point physique — ignoré pour une intégration purement en ligne.</p>
-        <Code>{`POST ${base}/${mount}/payments/deposit
+        <Code>{`POST ${base}payments/deposit
 
 { "clientPhone": "242612345678", "amount": 10000 }`}</Code>
       </Section>
@@ -189,7 +189,7 @@ ${keyHeader}: ...`}</Code>
         </p>
 
         <h3 className="font-medium text-white">POST /payments/refund</h3>
-        <Code>{`POST ${base}/${mount}/payments/refund
+        <Code>{`POST ${base}payments/refund
 ${keyHeader}: ...
 Idempotency-Key: refund-CMD-2024-001
 
@@ -206,7 +206,7 @@ Idempotency-Key: refund-CMD-2024-001
         </p>
 
         <h3 className="mt-6 font-medium text-white">GET /payments/refunds/by-order/:orderId</h3>
-        <Code>{`GET ${base}/${mount}/payments/refunds/by-order/CMD-2024-001
+        <Code>{`GET ${base}payments/refunds/by-order/CMD-2024-001
 ${keyHeader}: ...`}</Code>
         <p>
           Retourne le total payé, les remboursements exécutés, le solde remboursable et les dettes ouvertes liées
@@ -214,7 +214,7 @@ ${keyHeader}: ...`}</Code>
         </p>
 
         <h3 className="mt-6 font-medium text-white">GET /payments/refunds/debt-alerts?threshold=...</h3>
-        <Code>{`GET ${base}/${mount}/payments/refunds/debt-alerts?threshold=100000
+        <Code>{`GET ${base}payments/refunds/debt-alerts?threshold=100000
 ${keyHeader}: ...`}</Code>
         <p>
           Liste les dettes ouvertes au-dessus d’un seuil pour faciliter l’alerting opérationnel (monitoring backoffice).
@@ -230,13 +230,13 @@ ${keyHeader}: ...`}</Code>
           du plan est le montant de base ; les frais de paiement habituels s’ajoutent. Prix et fréquence sont figés
           sur chaque abonnement.
         </p>
-        <Code>{`GET ${base}/${mount}/billing
+        <Code>{`GET ${base}billing
 ${keyHeader}: ...`}</Code>
         <p>
           Cette route retourne les capacités disponibles : devise, périodicités, moyens de paiement et politique de
           relance.
         </p>
-        <Code>{`POST ${base}/${mount}/billing/plans
+        <Code>{`POST ${base}billing/plans
 ${keyHeader}: ...
 
 {
@@ -247,15 +247,15 @@ ${keyHeader}: ...
   "intervalCount": 1
 }
 
-GET ${base}/${mount}/billing/plans
-PATCH ${base}/${mount}/billing/plans/plan-uuid
+GET ${base}billing/plans
+PATCH ${base}billing/plans/plan-uuid
 { "isActive": false }`}</Code>
         <p>
           La souscription requiert le consentement explicite du client et son PIN. Le PIN authentifie le mandat, n’est
           jamais conservé et n’est plus demandé pour les échéances automatiques. Le premier paiement est effectué à
           la création.
         </p>
-        <Code>{`POST ${base}/${mount}/billing/subscriptions
+        <Code>{`POST ${base}billing/subscriptions
 ${keyHeader}: ...
 
 {

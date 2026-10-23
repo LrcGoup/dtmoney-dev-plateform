@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
 
 export default function HomePage() {
-  redirect('/login')
+  redirect('https://business.dtmoney.cg')
 }

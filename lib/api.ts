@@ -13,10 +13,6 @@ import { getAccessToken, setAccessToken } from './auth-storage'
 
 const PROXY_API_BASE = '/api/v3'
 
-export function getApiMountPath(): 'connect' {
-  return 'connect'
-}
-
 export function getBusinessApiKeyHeader(): 'dt-connect-key' {
   return 'dt-connect-key'
 }
@@ -133,13 +129,6 @@ export const api = {
     request<WalletPhoneVerification>(mountPath('/auth/verify-wallet-phone'), {
       method: 'POST',
       body: JSON.stringify({ phone }),
-      token: null,
-    }),
-
-  login: (email: string, password: string) =>
-    request<AuthLoginData>(mountPath('/auth/login'), {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
       token: null,
     }),
 
@@ -284,13 +273,18 @@ export const api = {
 
 export function getApiBaseUrl() {
   const configured = process.env.NEXT_PUBLIC_API_URL ?? PROXY_API_BASE
+  const connectPath = '/api/v3/connect/'
   if (configured.startsWith('/')) {
     const publicOrigin = process.env.NEXT_PUBLIC_API_ORIGIN?.replace(/\/$/, '')
-    if (publicOrigin) return `${publicOrigin}/api/v3`
-    if (typeof window !== 'undefined') return `${window.location.origin}${configured}`
-    return 'http://localhost:4017/api/v3'
+    if (publicOrigin) return `${publicOrigin}${connectPath}`
+    if (typeof window !== 'undefined') {
+      const prefix = configured.replace(/\/+$/, '').replace(/\/api\/v[23](?:\/connect)?$/, '')
+      return `${window.location.origin}${prefix}${connectPath}`
+    }
+    return `http://localhost:4017${connectPath}`
   }
-  return configured.replace(/\/$/, '')
+  const root = configured.replace(/\/+$/, '').replace(/\/api\/v[23](?:\/connect)?$/, '')
+  return `${root}${connectPath}`
 }
 
 export function getSwaggerUrl() {

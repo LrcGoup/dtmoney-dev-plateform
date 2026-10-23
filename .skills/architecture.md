@@ -8,7 +8,7 @@ Next.js **16** · React 19 · Tailwind 4 · TypeScript
 
 | Zone | Routes |
 |------|--------|
-| Accès | `/` → `/login`, `/login`, `/auth/sso` |
+| Accès | `/` → DT Business, `/auth/sso` |
 | Dashboard | `/dashboard/*` — api-keys, webhooks, docs, payment-methods… |
 
 ## Layout

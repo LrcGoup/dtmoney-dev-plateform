@@ -1,6 +1,5 @@
 import {
   getApiBaseUrl,
-  getApiMountPath,
   getBusinessApiKeyHeader,
   getProductLabel,
   getSwaggerUrl,
@@ -9,10 +8,9 @@ import {
 export function getIntegrationGuideMeta() {
   const base = getApiBaseUrl()
   const swagger = getSwaggerUrl()
-  const mount = getApiMountPath()
   const keyHeader = getBusinessApiKeyHeader()
   const product = getProductLabel()
-  return { base, swagger, mount, keyHeader, product, connectV3: true as const }
+  return { base, swagger, keyHeader, product, connectV3: true as const }
 }
 
 export const integrationGuideSections = [

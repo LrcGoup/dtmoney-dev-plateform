@@ -11,10 +11,9 @@ interface AuthContextValue {
   client: { id: string; email: string; name: string | null; status: string } | null
   account: ConnectAppProfile | null
   loading: boolean
-  login: (email: string, password: string) => Promise<void>
   logout: () => Promise<void>
   refreshAccount: () => Promise<void>
-  setAuthFromVerify: (
+  setAuthFromSso: (
     accessToken: string,
     email: string,
     connectApp?: { id: string; email: string; name: string | null; status: string },
@@ -91,21 +90,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [refreshAccount])
 
-  const login = useCallback(
-    async (email: string, password: string) => {
-      const data = await api.login(email, password)
-      setAccessToken(data.accessToken)
-      setToken(data.accessToken)
-      const sessionApp = sessionAppFromAuth(data)
-      if (sessionApp) {
-        setClient(sessionApp)
-        setClientStub(sessionApp)
-      }
-      await refreshAccount()
-    },
-    [refreshAccount],
-  )
-
   const logout = useCallback(async () => {
     try {
       await api.logout()
@@ -118,7 +102,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setAccount(null)
   }, [])
 
-  const setAuthFromVerify = useCallback(
+  const setAuthFromSso = useCallback(
     (
       accessToken: string,
       email: string,
@@ -135,8 +119,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   )
 
   const value = useMemo(
-    () => ({ token, client, account, loading, login, logout, refreshAccount, setAuthFromVerify }),
-    [token, client, account, loading, login, logout, refreshAccount, setAuthFromVerify],
+    () => ({ token, client, account, loading, logout, refreshAccount, setAuthFromSso }),
+    [token, client, account, loading, logout, refreshAccount, setAuthFromSso],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

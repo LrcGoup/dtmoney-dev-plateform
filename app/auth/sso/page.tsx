@@ -9,7 +9,7 @@ import { setClientStub } from '@/lib/auth-storage'
 function SsoHandoff() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { setAuthFromVerify } = useAuth()
+  const { setAuthFromSso } = useAuth()
   const [error, setError] = useState<string | null>(null)
   const started = useRef(false)
 
@@ -39,13 +39,13 @@ function SsoHandoff() {
             return
           }
           const email = data.connectApp?.email || legacyEmail
-          setAuthFromVerify(data.accessToken, email, data.connectApp ?? undefined)
+          setAuthFromSso(data.accessToken, email, data.connectApp ?? undefined)
           router.replace('/dashboard')
           return
         }
 
         if (legacyAccessToken) {
-          setAuthFromVerify(legacyAccessToken, legacyEmail)
+          setAuthFromSso(legacyAccessToken, legacyEmail)
           if (legacyId) {
             try {
               setClientStub({
@@ -62,7 +62,7 @@ function SsoHandoff() {
           return
         }
 
-        router.replace('/login')
+        window.location.assign('https://business.dtmoney.cg')
       } catch (err) {
         const message =
           err instanceof ApiError
@@ -75,14 +75,14 @@ function SsoHandoff() {
     }
 
     void run()
-  }, [searchParams, setAuthFromVerify, router])
+  }, [searchParams, setAuthFromSso, router])
 
   if (error) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-3 px-6 text-center">
         <p className="text-sm text-red-400">{error}</p>
-        <a href="/login" className="text-sm text-zinc-400 underline hover:text-zinc-200">
-          Aller au login
+        <a href="https://business.dtmoney.cg" className="text-sm text-zinc-400 underline hover:text-zinc-200">
+          Retourner à DT Business
         </a>
       </main>
     )

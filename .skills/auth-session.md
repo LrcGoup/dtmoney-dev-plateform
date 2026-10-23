@@ -24,7 +24,7 @@ Query params :
 
 ## Auth pages
 
-`/login` — onboarding = invitation DT Business DEVELOPER + SSO
+`/auth/sso` — accès exclusivement via l’invitation et le SSO DT Business
 
 ## Dashboard gate
 
