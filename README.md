@@ -34,10 +34,9 @@ Ouvrir [http://localhost:4023](http://localhost:4023).
 
 | Route | Description |
 |-------|-------------|
-| `/` | Landing marketing |
-| `/register` | Inscription développeur |
-| `/verify-email` | Vérification OTP email |
+| `/` | Redirection vers la connexion |
 | `/login` | Connexion JWT |
+| `/auth/sso` | Accès depuis DT Business |
 | `/dashboard` | Vue d’ensemble compte |
 | `/dashboard/api-keys` | CRUD clés API |
 | `/dashboard/webhooks` | Configuration webhooks |

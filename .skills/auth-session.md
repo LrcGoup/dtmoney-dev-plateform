@@ -22,9 +22,9 @@ Query params :
 
 `useAuth()` — user, login, logout, loading
 
-## Marketing auth pages
+## Auth pages
 
-`/login`, `/verify-email` — `/register` retiré (410 API + redirect notice) ; onboarding = invite DT Business DEVELOPER + SSO
+`/login` — onboarding = invitation DT Business DEVELOPER + SSO
 
 ## Dashboard gate
 

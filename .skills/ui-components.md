@@ -10,9 +10,9 @@
 - `cn()` utility pour merge classes
 - `app/globals.css` — base Tailwind
 
-## Layout marketing
+## Layouts
 
-`components/layout/` — nav marketing vs dashboard
+`components/layout/` — dashboard navigation and shell
 
 ## Rules
 

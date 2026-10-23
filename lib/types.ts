@@ -102,14 +102,6 @@ export interface WebhookDeliveryListPage {
   totalPages: number
 }
 
-export interface RegisterPayload {
-  email: string
-  password: string
-  phone: string
-  name?: string
-  service?: string
-}
-
 export interface WalletPhoneVerification {
   status: boolean
   exists: boolean

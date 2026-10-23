@@ -1,9 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { FormEvent, Suspense, useEffect, useState } from 'react'
-import { MarketingNav } from '@/components/layout/marketing-nav'
+import { useRouter } from 'next/navigation'
+import { FormEvent, useEffect, useState } from 'react'
 import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardDescription, CardTitle } from '@/components/ui/card'
@@ -15,13 +14,10 @@ import { useAuth } from '@/contexts/auth-context'
 function LoginForm() {
   const { login, token } = useAuth()
   const router = useRouter()
-  const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  const registerDisabled = searchParams.get('notice') === 'register-disabled'
-
   useEffect(() => {
     if (token) router.replace('/dashboard')
   }, [token, router])
@@ -47,12 +43,6 @@ function LoginForm() {
       <CardTitle>Connexion développeur</CardTitle>
       <CardDescription>Accédez à votre portail DT Connect API</CardDescription>
       <form onSubmit={onSubmit} className="mt-6 space-y-4">
-        {registerDisabled && (
-          <Alert variant="info">
-            L’inscription self-service est désactivée. Demandez une invitation Développeur dans
-            DT Business, puis ouvrez Connect via SSO.
-          </Alert>
-        )}
         {error && <Alert variant="error">{error}</Alert>}
         <div>
           <Label htmlFor="email">Email</Label>
@@ -84,13 +74,10 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen bg-slate-950">
-      <MarketingNav />
-      <div className="mx-auto flex max-w-md flex-col px-6 py-16">
-        <Suspense fallback={<Card><CardTitle>Connexion…</CardTitle></Card>}>
-          <LoginForm />
-        </Suspense>
+    <main className="flex min-h-screen items-center justify-center bg-slate-950 px-6 py-16">
+      <div className="w-full max-w-md">
+        <LoginForm />
       </div>
-    </div>
+    </main>
   )
 }

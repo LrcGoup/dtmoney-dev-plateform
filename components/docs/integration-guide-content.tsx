@@ -63,8 +63,7 @@ export function IntegrationGuideContent() {
       <Section id="onboarding" title="3. Compte développeur">
         <ol className="list-decimal space-y-2 pl-5">
           <li>
-            Invitation Développeur depuis DT Business (organisation PLATFORM) — plus d’inscription
-            self-service sur <code className="text-emerald-400">/register</code>.
+            Recevez une invitation Développeur depuis DT Business (organisation PLATFORM).
           </li>
           <li>Ouverture SSO « Connect API » depuis le mini-portail DT Business.</li>
           <li>Connexion JWT → création de clé(s) API → configuration webhooks.</li>
@@ -183,9 +182,10 @@ ${keyHeader}: ...`}</Code>
 
       <Section id="refunds" title="10. Remboursements & dettes partenaire">
         <p>
-          DTMoney prend en charge le remboursement intégral (montant + frais), crédité sur le wallet client.
-          Si le solde partenaire est insuffisant, la plateforme avance et enregistre une dette récupérée ensuite
-          automatiquement (FIFO) sur les encaissements futurs.
+          DTMoney prend en charge le remboursement intégral ou partiel, crédité sur le wallet client. Si le marchand
+          ne couvre pas le montant et les frais, le remboursement n’est accepté que si la trésorerie peut couvrir le
+          manque ; sinon la requête échoue sans mouvement de solde. Une dette partenaire est enregistrée uniquement
+          après prise en charge du manque par la trésorerie.
         </p>
 
         <h3 className="font-medium text-white">POST /payments/refund</h3>
@@ -230,6 +230,12 @@ ${keyHeader}: ...`}</Code>
           du plan est le montant de base ; les frais de paiement habituels s’ajoutent. Prix et fréquence sont figés
           sur chaque abonnement.
         </p>
+        <Code>{`GET ${base}/${mount}/billing
+${keyHeader}: ...`}</Code>
+        <p>
+          Cette route retourne les capacités disponibles : devise, périodicités, moyens de paiement et politique de
+          relance.
+        </p>
         <Code>{`POST ${base}/${mount}/billing/plans
 ${keyHeader}: ...
 
@@ -271,6 +277,12 @@ ${keyHeader}: ...
           immédiatement.
         </p>
         <p>
+          Pour voir la liste, utilisez <code className="text-emerald-400">GET /billing/subscriptions?page=1&amp;pageSize=20&amp;status=ACTIVE</code>.
+          Les statuts filtrables sont <code className="text-slate-400">PENDING</code>, <code className="text-slate-400">ACTIVE</code>,{' '}
+          <code className="text-slate-400">PAST_DUE</code>, <code className="text-slate-400">SUSPENDED</code> et{' '}
+          <code className="text-slate-400">CANCELED</code>.
+        </p>
+        <p>
           Utilisez <code className="text-emerald-400">GET /billing/subscriptions</code> pour lister les abonnements,
           <code className="text-emerald-400"> GET /billing/subscriptions/:id</code> pour suivre les factures, et
           <code className="text-emerald-400"> POST /billing/subscriptions/:id/cancel</code> pour résilier.
@@ -285,6 +297,10 @@ ${keyHeader}: ...
           Pour éviter un double encaissement (double clic, timeout, retry), envoyez une clé unique par paiement via{' '}
           <code className="text-emerald-400">idempotencyKey</code> ou l’en-tête <code className="text-emerald-400">Idempotency-Key</code>.
           Une requête identique retourne le même succès sans second débit.
+        </p>
+        <p>
+          À la création d’un abonnement, la clé protège la souscription et sa première échéance ; chaque renouvellement
+          est ensuite idempotent par facture.
         </p>
         <p>Utilisez aussi <code className="text-slate-400">orderId</code> pour la traçabilité et la réconciliation.</p>
       </Section>

@@ -4,7 +4,6 @@ import type {
   ApiResponse,
   AuthLoginData,
   ConnectAppProfile,
-  RegisterPayload,
   WalletPhoneVerification,
   WebhookDeliveryDetail,
   WebhookDeliveryListPage,
@@ -137,16 +136,6 @@ export const api = {
       token: null,
     }),
 
-  register: (payload: RegisterPayload) =>
-    request<{
-      status: boolean
-      message: string
-      email: string
-      connectAppId?: string
-      apiClientId?: string
-      devVerificationCode?: string
-    }>(mountPath('/auth/register'), { method: 'POST', body: JSON.stringify(payload), token: null }),
-
   login: (email: string, password: string) =>
     request<AuthLoginData>(mountPath('/auth/login'), {
       method: 'POST',
@@ -169,20 +158,6 @@ export const api = {
       body: JSON.stringify(connectAppId ? { connectAppId } : {}),
       token: userAccessToken,
       skipRefresh: true,
-    }),
-
-  verifyEmail: (email: string, code: string) =>
-    request<{
-      status: boolean
-      message: string
-      accessToken: string
-      expiresIn: number
-      connectAppId?: string
-      apiClientId?: string
-    }>(mountPath('/auth/verify-email'), {
-      method: 'POST',
-      body: JSON.stringify({ email, code }),
-      token: null,
     }),
 
   logout: () =>
