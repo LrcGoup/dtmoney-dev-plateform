@@ -81,7 +81,10 @@ function SsoHandoff() {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-3 px-6 text-center">
         <p className="text-sm text-red-400">{error}</p>
-        <a href="https://business.dtmoney.cg" className="text-sm text-zinc-400 underline hover:text-zinc-200">
+        <a
+          href={process.env.NEXT_PUBLIC_DT_BUSINESS_URL ?? 'https://business.dt-money.com'}
+          className="text-sm text-zinc-400 underline hover:text-zinc-200"
+        >
           Retourner à DT Business
         </a>
       </main>

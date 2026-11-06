@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
 
 export default function HomePage() {
-  redirect('https://business.dtmoney.cg')
+  redirect(process.env.NEXT_PUBLIC_DT_BUSINESS_URL ?? 'https://business.dt-money.com')
 }

@@ -16,6 +16,9 @@ bun run lint
 | `NEXT_PUBLIC_API_URL` | **`/api/v3`** (Connect) — same-origin proxy |
 | `API_PROXY_TARGET` | dt-api origin pour rewrites (ex. `http://127.0.0.1:4017`) |
 | `NEXT_PUBLIC_API_ORIGIN` | Affichage URLs doc / Swagger |
+| `NEXT_PUBLIC_DT_BUSINESS_URL` | URL Business pour la redirection d’accueil et le lien de retour SSO (défaut `https://business.dt-money.com`) |
+
+Les variables `NEXT_PUBLIC_*` sont intégrées au bundle lors de `next build` : définir cette URL dans l’environnement de build.
 
 ## Local dev
 
